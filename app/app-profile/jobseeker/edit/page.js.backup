@@ -1,0 +1,710 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import DashboardHeader from '../../../components/DashboardHeader';
+import './edit-profile.css';
+
+export default function EditJobseekerPreferences() {
+  const router = useRouter();
+  const [currentUser, setCurrentUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+
+  // Preference data
+  const [categoryFields, setCategoryFields] = useState([]);
+  const [jobCategories, setJobCategories] = useState([]);
+  const [selectedFieldIds, setSelectedFieldIds] = useState([]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
+  const [filteredCategories, setFilteredCategories] = useState([]);
+
+  useEffect(() => {
+    checkAuthAndLoadData();
+  }, []);
+
+  useEffect(() => {
+    // Filter categories based on selected fields
+    if (selectedFieldIds.length > 0) {
+      const filtered = jobCategories.filter(category => 
+        selectedFieldIds.includes(category.category_field_id)
+      );
+      setFilteredCategories(filtered);
+      
+      // Remove selected categories that are no longer in filtered list
+      setSelectedCategoryIds(prev => 
+        prev.filter(catId => 
+          filtered.some(cat => cat.job_category_id === catId)
+        )
+      );
+    } else {
+      setFilteredCategories([]);
+      setSelectedCategoryIds([]);
+    }
+  }, [selectedFieldIds, jobCategories]);
+
+  const checkAuthAndLoadData = async () => {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      router.push('/app-login');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/auth/me', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
+        if (userData.user.user_type !== 'job-seeker') {
+          router.push('/unauthorized');
+          return;
+        }
+        setCurrentUser(userData.user);
+        await Promise.all([
+          loadCategoryFields(),
+          loadJobCategories(),
+          loadCurrentPreferences()
+        ]);
+      } else {
+        router.push('/app-login');
+      }
+    } catch (error) {
+      console.error('Error checking auth:', error);
+      router.push('/app-login');
+    } finally {
+      setLoading(false);
+    }
+  };
+  const loadCategoryFields = async () => {
+    try {
+      const response = await fetch('/api/category-fields');
+      if (response.ok) {
+        const data = await response.json();
+        setCategoryFields(data || []);
+      }
+    } catch (error) {
+      console.error('Error loading category fields:', error);
+      setError('Failed to load category fields');
+    }
+  };
+
+  const loadJobCategories = async () => {
+    try {
+      const response = await fetch('/api/job-categories');
+      if (response.ok) {
+        const data = await response.json();
+        setJobCategories(data || []);
+      }
+    } catch (error) {
+      console.error('Error loading job categories:', error);
+      setError('Failed to load job categories');
+    }
+  };
+
+  const loadCurrentPreferences = async () => {
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch('/api/jobseeker/preferences', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSelectedFieldIds(data.field_preferences || []);
+        setSelectedCategoryIds(data.category_preferences || []);
+      }
+    } catch (error) {
+      console.error('Error loading current preferences:', error);
+    }
+  };
+
+  const handleFieldToggle = (fieldId) => {
+    setSelectedFieldIds(prev => {
+      if (prev.includes(fieldId)) {
+        return prev.filter(id => id !== fieldId);
+      } else {
+        return [...prev, fieldId];
+      }
+    });
+  };
+
+  const handleCategoryToggle = (categoryId) => {
+    setSelectedCategoryIds(prev => {
+      if (prev.includes(categoryId)) {
+        return prev.filter(id => id !== categoryId);
+      } else {
+        return [...prev, categoryId];
+      }
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const token = localStorage.getItem('authToken');
+      
+      const response = await fetch('/api/jobseeker/preferences', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          field_preferences: selectedFieldIds,
+          category_preferences: selectedCategoryIds
+        })
+      });
+
+      if (response.ok) {
+        setSuccess('Preferences updated successfully!');
+        // Trigger profile refresh event
+        window.dispatchEvent(new CustomEvent('profileUpdated'));
+        
+        // Redirect back to profile after a short delay
+        setTimeout(() => {
+          router.push('/app-profile/jobseeker');
+        }, 2000);
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to update preferences');
+      }
+    } catch (error) {
+      console.error('Error updating preferences:', error);
+      setError('Failed to update preferences. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="edit-profile-container">
+        <DashboardHeader user={currentUser} />
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Loading preferences...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="edit-profile-container">
+      <DashboardHeader user={currentUser} />
+      
+      <div className="edit-profile-content">
+        <div className="edit-profile-header">
+          <button 
+            onClick={() => router.back()}
+            className="back-button"
+          >
+            ← Back to Profile
+          </button>
+          <h1>Edit Job Preferences</h1>
+          <p>Select your preferred job fields and categories to get better job recommendations</p>
+        </div>
+
+        {error && (
+          <div className="alert alert-error">
+            {error}
+          </div>
+        )}
+
+        {success && (
+          <div className="alert alert-success">
+            {success}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="edit-profile-form">
+          {/* Category Fields Section */}
+          <div className="form-section">
+            <h2>Job Fields</h2>
+            <p className="section-description">
+              Select the broad job fields you're interested in. This will determine which specific categories are available for selection.
+            </p>
+            
+            <div className="preference-grid">
+              {categoryFields.map((field) => (
+                <div 
+                  key={field.category_field_id} 
+                  className={`preference-card ${selectedFieldIds.includes(field.category_field_id) ? 'selected' : ''}`}
+                  onClick={() => handleFieldToggle(field.category_field_id)}
+                >
+                  <div className="preference-header">
+                    <h3>{field.category_field_name}</h3>
+                    <div className="checkbox">
+                      {selectedFieldIds.includes(field.category_field_id) && <span>✓</span>}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Job Categories Section */}
+          <div className="form-section">
+            <h2>Specific Job Categories</h2>
+            <p className="section-description">
+              Select specific job categories within your chosen fields. These will be used for precise job matching.
+            </p>
+
+            {selectedFieldIds.length === 0 ? (
+              <div className="empty-state">
+                <p>Please select at least one job field above to see available categories.</p>
+              </div>
+            ) : (
+              <div className="categories-container">
+                {categoryFields
+                  .filter(field => selectedFieldIds.includes(field.category_field_id))
+                  .map(field => {
+                    const fieldCategories = filteredCategories.filter(
+                      cat => cat.category_field_id === field.category_field_id
+                    );
+                    
+                    return (
+                      <div key={field.category_field_id} className="field-category-group">
+                        <h3 className="field-title">{field.category_field_name}</h3>
+                        <div className="category-grid">
+                          {fieldCategories.map(category => (
+                            <div
+                              key={category.job_category_id}
+                              className={`category-item ${selectedCategoryIds.includes(category.job_category_id) ? 'selected' : ''}`}
+                              onClick={() => handleCategoryToggle(category.job_category_id)}
+                            >
+                              <span className="category-name">{category.job_category_name}</span>
+                              <div className="category-checkbox">
+                                {selectedCategoryIds.includes(category.job_category_id) && <span>✓</span>}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })
+                }
+              </div>
+            )}
+          </div>
+
+          {/* Selection Summary */}
+          {(selectedFieldIds.length > 0 || selectedCategoryIds.length > 0) && (
+            <div className="form-section">
+              <h2>Selection Summary</h2>
+              
+              <div className="summary-grid">
+                <div className="summary-item">
+                  <h4>Selected Fields ({selectedFieldIds.length})</h4>
+                  <div className="tags-container">
+                    {categoryFields
+                      .filter(field => selectedFieldIds.includes(field.category_field_id))
+                      .map(field => (
+                        <span key={field.category_field_id} className="tag field-tag">
+                          {field.category_field_name}
+                        </span>
+                      ))
+                    }
+                  </div>
+                </div>
+
+                <div className="summary-item">
+                  <h4>Selected Categories ({selectedCategoryIds.length})</h4>
+                  <div className="tags-container">
+                    {jobCategories
+                      .filter(category => selectedCategoryIds.includes(category.job_category_id))
+                      .map(category => (
+                        <span key={category.job_category_id} className="tag category-tag">
+                          {category.job_category_name}
+                        </span>
+                      ))
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Submit Buttons */}
+          <div className="form-actions">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="btn-secondary"
+              disabled={saving}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={saving || (selectedFieldIds.length === 0 && selectedCategoryIds.length === 0)}
+            >
+              {saving ? 'Saving...' : 'Save Preferences'}
+            </button>          </div>        </form>
+      </div>
+    </div>
+  );
+}
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const token = localStorage.getItem('authToken');
+      
+      // Prepare form data for submission
+      const submitData = new FormData();
+      
+      // Add profile data
+      Object.keys(formData).forEach(key => {
+        if (formData[key]) {
+          submitData.append(key, formData[key]);
+        }
+      });
+
+      // Add resume file if selected
+      if (resumeFile) {
+        submitData.append('resume', resumeFile);
+      }
+
+      const response = await fetch('/api/jobseeker/profile', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: submitData
+      });
+
+      if (response.ok) {
+        setSuccess('Profile updated successfully!');
+        // Trigger profile refresh event
+        window.dispatchEvent(new CustomEvent('profileUpdated'));
+        
+        // Redirect back to profile after a short delay
+        setTimeout(() => {
+          router.push('/app-profile/jobseeker');
+        }, 2000);
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to update profile');
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      setError('Failed to update profile. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="edit-profile-container">
+        <DashboardHeader user={currentUser} />
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="edit-profile-container">
+      <DashboardHeader user={currentUser} />
+      
+      <div className="edit-profile-content">
+        <div className="edit-profile-header">
+          <button 
+            onClick={() => router.back()}
+            className="back-button"
+          >
+            ← Back to Profile
+          </button>
+          <h1>Edit Profile</h1>
+          <p>Update your information to improve your job recommendations</p>
+        </div>
+
+        {error && (
+          <div className="alert alert-error">
+            {error}
+          </div>
+        )}
+
+        {success && (
+          <div className="alert alert-success">
+            {success}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="edit-profile-form">
+          {/* Personal Information Section */}
+          <div className="form-section">
+            <h2>Personal Information</h2>
+            
+            <div className="form-grid">
+              <div className="form-group">
+                <label htmlFor="first_name">First Name *</label>
+                <input
+                  type="text"
+                  id="first_name"
+                  name="first_name"
+                  value={formData.first_name}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="last_name">Last Name *</label>
+                <input
+                  type="text"
+                  id="last_name"
+                  name="last_name"
+                  value={formData.last_name}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="phone">Phone Number</label>
+                <input
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="birth_date">Date of Birth</label>
+                <input
+                  type="date"
+                  id="birth_date"
+                  name="birth_date"
+                  value={formData.birth_date}
+                  onChange={handleInputChange}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Professional Information Section */}
+          <div className="form-section">
+            <h2>Professional Information</h2>
+            
+            <div className="form-group">
+              <label htmlFor="profile_summary">Profile Summary</label>
+              <textarea
+                id="profile_summary"
+                name="profile_summary"
+                value={formData.profile_summary}
+                onChange={handleInputChange}
+                rows="4"
+                placeholder="Brief description of your professional background and career objectives..."
+              />
+            </div>
+
+            <div className="form-grid">
+              <div className="form-group">
+                <label htmlFor="education_level">Education Level</label>
+                <select
+                  id="education_level"
+                  name="education_level"
+                  value={formData.education_level}
+                  onChange={handleInputChange}
+                >
+                  <option value="">Select Education Level</option>
+                  <option value="High School">High School</option>
+                  <option value="Associate Degree">Associate Degree</option>
+                  <option value="Bachelor's Degree">Bachelor's Degree</option>
+                  <option value="Master's Degree">Master's Degree</option>
+                  <option value="PhD">PhD</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="experience_level">Experience Level</label>
+                <select
+                  id="experience_level"
+                  name="experience_level"
+                  value={formData.experience_level}
+                  onChange={handleInputChange}
+                >
+                  <option value="">Select Experience Level</option>
+                  <option value="Entry Level">Entry Level (0-2 years)</option>
+                  <option value="Mid Level">Mid Level (3-5 years)</option>
+                  <option value="Senior Level">Senior Level (6-10 years)</option>
+                  <option value="Executive">Executive (10+ years)</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="skills">Skills</label>
+              <textarea
+                id="skills"
+                name="skills"
+                value={formData.skills}
+                onChange={handleInputChange}
+                rows="3"
+                placeholder="List your key skills separated by commas (e.g., JavaScript, React, Project Management, Communication)"
+              />
+            </div>
+          </div>
+
+          {/* Job Preferences Section */}
+          <div className="form-section">
+            <h2>Job Preferences</h2>
+            
+            <div className="form-grid">
+              <div className="form-group">
+                <label htmlFor="preferred_job_type">Preferred Job Type</label>
+                <select
+                  id="preferred_job_type"
+                  name="preferred_job_type"
+                  value={formData.preferred_job_type}
+                  onChange={handleInputChange}
+                >
+                  <option value="">Select Job Type</option>
+                  <option value="Full-time">Full-time</option>
+                  <option value="Part-time">Part-time</option>
+                  <option value="Contract">Contract</option>
+                  <option value="Freelance">Freelance</option>
+                  <option value="Internship">Internship</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="preferred_location">Preferred Location</label>
+                <input
+                  type="text"
+                  id="preferred_location"
+                  name="preferred_location"
+                  value={formData.preferred_location}
+                  onChange={handleInputChange}
+                  placeholder="e.g., New York, Remote, Philippines"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="preferred_salary_min">Minimum Salary</label>
+                <input
+                  type="number"
+                  id="preferred_salary_min"
+                  name="preferred_salary_min"
+                  value={formData.preferred_salary_min}
+                  onChange={handleInputChange}
+                  placeholder="e.g., 30000"
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="preferred_salary_max">Maximum Salary</label>
+                <input
+                  type="number"
+                  id="preferred_salary_max"
+                  name="preferred_salary_max"
+                  value={formData.preferred_salary_max}
+                  onChange={handleInputChange}
+                  placeholder="e.g., 60000"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Resume Section */}
+          <div className="form-section">
+            <h2>Resume</h2>
+            
+            <div className="resume-upload">
+              <div className="form-group">
+                <label htmlFor="resume">Upload Resume</label>
+                <input
+                  type="file"
+                  id="resume"
+                  accept=".pdf,.doc,.docx"
+                  onChange={handleResumeChange}
+                  className="file-input"
+                />
+                <div className="file-info">
+                  <small>Supported formats: PDF, DOC, DOCX (Max size: 5MB)</small>
+                </div>
+              </div>
+
+              {/* Current Resume */}
+              {currentResume && !resumeFile && (
+                <div className="current-resume">
+                  <h4>Current Resume</h4>
+                  <div className="resume-item">
+                    <span className="resume-name">📄 {currentResume}</span>
+                    <button 
+                      type="button"
+                      onClick={() => window.open(`/api/resume/download/${currentResume}`, '_blank')}
+                      className="download-btn"
+                    >
+                      Download
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* New Resume Preview */}
+              {resumeFile && (
+                <div className="resume-preview">
+                  <h4>New Resume Preview</h4>
+                  <div className="resume-item">
+                    <span className="resume-name">📄 {resumeFile.name}</span>
+                    <span className="resume-size">({(resumeFile.size / 1024 / 1024).toFixed(2)} MB)</span>
+                  </div>
+                  
+                  {resumePreview && (
+                    <div className="pdf-preview">
+                      <iframe
+                        src={resumePreview}
+                        width="100%"
+                        height="400px"
+                        title="Resume Preview"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Submit Buttons */}
+          <div className="form-actions">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="btn-secondary"
+              disabled={saving}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={saving}
+            >
+              {saving ? 'Saving...' : 'Save Profile'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

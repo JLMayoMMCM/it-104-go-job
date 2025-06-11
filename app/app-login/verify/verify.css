@@ -1,0 +1,263 @@
+.verify-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #5585b5 0%, #53a8b6 50%, #79c2d0 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.verify-card {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  padding: 3rem;
+  width: 100%;
+  max-width: 450px;
+  text-align: center;
+}
+
+.verify-header {
+  margin-bottom: 2rem;
+}
+
+.verify-header .logo {
+  margin-bottom: 1rem;
+  border-radius: 50%;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.verify-header h1 {
+  color: #5585b5;
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.verify-header p {
+  color: #666;
+  font-size: 1.1rem;
+  line-height: 1.5;
+}
+
+.verify-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  text-align: left;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.form-group input {
+  padding: 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: white;
+  font-family: inherit;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #5585b5;
+  box-shadow: 0 0 0 3px rgba(85, 133, 181, 0.1);
+  transform: translateY(-1px);
+}
+
+.form-group input::placeholder {
+  color: #999;
+  font-style: italic;
+}
+
+.form-group input[type="text"] {
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+}
+
+.error-message {
+  color: #dc3545;
+  font-size: 0.9rem;
+  font-weight: 500;
+  background: #fff5f5;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #f5c6cb;
+}
+
+.success-message {
+  color: #155724;
+  font-size: 0.9rem;
+  font-weight: 500;
+  background: #d4edda;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #c3e6cb;
+}
+
+.verify-btn {
+  background: linear-gradient(135deg, #5585b5, #53a8b6);
+  color: white;
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+}
+
+.verify-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #4a759a, #4a96a3);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(85, 133, 181, 0.3);
+}
+
+.verify-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.verify-actions {
+  margin-bottom: 2rem;
+  padding: 1rem 0;
+  border-top: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.verify-actions p {
+  color: #666;
+  margin: 0 0 1rem 0;
+  font-size: 0.9rem;
+}
+
+.resend-btn {
+  background: transparent;
+  color: #5585b5;
+  border: 2px solid #5585b5;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.resend-btn:hover:not(:disabled) {
+  background: #5585b5;
+  color: white;
+  transform: translateY(-1px);
+}
+
+.resend-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.verify-footer p {
+  color: #666;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.verify-footer a {
+  color: #5585b5;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.verify-footer a:hover {
+  text-decoration: underline;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .verify-container {
+    padding: 1rem;
+  }
+  
+  .verify-card {
+    padding: 2rem;
+  }
+  
+  .verify-header h1 {
+    font-size: 1.8rem;
+  }
+  
+  .verify-header p {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .verify-card {
+    padding: 1.5rem;
+  }
+  
+  .verify-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .verify-header .logo {
+    width: 60px;
+    height: 60px;
+  }
+}
+
+/* Animation Effects */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.verify-card {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+/* Focus Effects */
+.form-group:focus-within label {
+  color: #5585b5;
+}
+
+.form-group input:hover {
+  border-color: #79c2d0;
+}
+
+/* Code Input Animation */
+.form-group input[type="text"]:focus {
+  animation: pulse 0.3s ease-in-out;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+  }
+}

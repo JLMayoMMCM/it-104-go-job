@@ -21,11 +21,22 @@ DROP TABLE IF EXISTS person_resume CASCADE;
 DROP TABLE IF EXISTS person CASCADE;
 DROP TABLE IF EXISTS address CASCADE;
 DROP TABLE IF EXISTS nationality CASCADE;
-
 DROP TABLE IF EXISTS company_ratings CASCADE;
-
 DROP TABLE IF EXISTS followed_companies CASCADE;
+Drop TABLE IF EXISTS company_notifications CASCADE;
+DROP TABLE IF EXISTS employee_company_notification_read CASCADE;
+DROP TABLE IF EXISTS job_seeker_experience_level CASCADE;
+DROP TABLE IF EXISTS job_seeker_education_level CASCADE;
 
+DROP TABLE IF EXISTS verification_codes CASCADE;
+
+DROP TABLE IF EXISTS jobseeker_field_preference CASCADE;
+
+
+
+
+-- Job Portal System Database Schema
+-- This schema includes tables for users, companies, jobs, applications, and more.
 
 -- Nationality table - to store different nationalities
 CREATE TABLE nationality (
@@ -75,10 +86,10 @@ CREATE TABLE account (
   account_number   VARCHAR(20) NOT NULL UNIQUE,
   account_password VARCHAR(100) NOT NULL,
   account_type_id  INTEGER     NOT NULL REFERENCES account_type(account_type_id) ON DELETE CASCADE,
-  account_is_verified BOOLEAN DEFAULT FALSE,
-  sso_user_id      VARCHAR(100)
+  account_is_verified BOOLEAN DEFAULT FALSE
 );
 
+-- Notifications table - to store notifications for accounts
 CREATE TABLE notifications (
   account_id         INTEGER NOT NULL REFERENCES account(account_id) ON DELETE CASCADE,
   notification_id    SERIAL PRIMARY KEY,
@@ -115,14 +126,31 @@ CREATE TABLE employee (
 CREATE TABLE job_seeker (
   job_seeker_id SERIAL PRIMARY KEY,
   person_id     INTEGER NOT NULL REFERENCES person(person_id) ON DELETE CASCADE,
-  account_id    INTEGER NOT NULL REFERENCES account(account_id) ON DELETE CASCADE
+  account_id    INTEGER NOT NULL REFERENCES account(account_id) ON DELETE CASCADE,
+  job_seeker_description TEXT,
+  job_seeker_experience_level_id VARCHAR(255),
+  job_seeker_education_level_id VARCHAR(255)
 );
+
+-- Job seeker experience and education levels
+CREATE TABLE job_seeker_experience_level (
+  job_seeker_experience_level_id SERIAL PRIMARY KEY,
+  experience_level_name VARCHAR(50) NOT NULL UNIQUE
+);
+
+CREATE TABLE job_seeker_education_level (
+  job_seeker_education_level_id SERIAL PRIMARY KEY,
+  education_level_name VARCHAR(50) NOT NULL UNIQUE
+);
+
 
 -- Job_type table
 CREATE TABLE job_type (
   job_type_id   SERIAL      PRIMARY KEY,
   job_type_name VARCHAR(50) NOT NULL
 );
+
+
 
 -- Category field table - broad categories for organizing job categories
 CREATE TABLE category_field (
@@ -148,6 +176,8 @@ CREATE TABLE job (
   job_requirements TEXT,
   job_benefits    TEXT,
   job_type_id     INTEGER     NOT NULL REFERENCES job_type(job_type_id) ON DELETE CASCADE,
+  job_experience_level_id INTEGER REFERENCES job_seeker_experience_level(job_seeker_experience_level_id) ON DELETE SET NULL,
+  job_education_level_id INTEGER REFERENCES job_seeker_education_level(job_seeker_education_level_id) ON DELETE SET NULL,
   job_salary      NUMERIC(10, 2),
   job_time        VARCHAR(50),
   job_rating      NUMERIC(3, 2) DEFAULT 0.00,
@@ -162,6 +192,17 @@ CREATE TABLE job_category_list (
   job_id          INTEGER NOT NULL REFERENCES job(job_id) ON DELETE CASCADE,
   job_category_id INTEGER NOT NULL REFERENCES job_category(job_category_id) ON DELETE CASCADE,
   PRIMARY KEY (job_id, job_category_id)
+);
+
+-- Jobseeker preference table - to store preferences of job seekers for algorithmic matching
+CREATE TABLE jobseeker_preference(
+  person_id INTEGER NOT NULL REFERENCES person(person_id) ON DELETE CASCADE,
+  preferred_job_category_id INTEGER NOT NULL REFERENCES job_category(job_category_id) ON DELETE CASCADE
+);
+
+CREATE TABLE jobseeker_field_preference(
+  person_id INTEGER NOT NULL REFERENCES person(person_id) ON DELETE CASCADE,
+  preferred_job_field_id INTEGER NOT NULL REFERENCES category_field(category_field_id) ON DELETE CASCADE
 );
 
 -- Job Requests table - to store applications from job seekers (renamed from Job_applications)
@@ -223,31 +264,105 @@ CREATE TABLE employee_company_notification_read (
   PRIMARY KEY (employee_id, company_notification_id)
 );
 
--- Password Reset Codes table - to store verification codes for password reset
-CREATE TABLE password_reset_codes (
-  id         SERIAL      PRIMARY KEY,
-  account_id INTEGER     NOT NULL REFERENCES account(account_id) ON DELETE CASCADE,
-  code       VARCHAR(6)  NOT NULL,
-  expires_at TIMESTAMP   NOT NULL,
-  created_at TIMESTAMP   DEFAULT NOW(),
-  used       BOOLEAN     DEFAULT FALSE,
-  UNIQUE(account_id)
-);
-
 -- Insert data for categories and types
 INSERT INTO account_type (account_type_id, account_type_name) 
 VALUES (1, 'Company'), (2, 'Job Seeker') 
 ON CONFLICT (account_type_id) DO NOTHING;
 
 INSERT INTO nationality (nationality_name) 
-VALUES ('Filipino'), ('American'), ('British'), ('Chinese'), ('Japanese'), ('Korean')
+VALUES
+  ('Afghan'),
+  ('Algerian'),
+  ('American'),
+  ('Angolan'),
+  ('Argentinian'),
+  ('Australian'),
+  ('Bahraini'),
+  ('Bangladeshi'),
+  ('Belarusian'),
+  ('Bhutanese'),
+  ('Bolivian'),
+  ('Brazilian'),
+  ('British'),
+  ('Bulgarian'),
+  ('Cameroonian'),
+  ('Canadian'),
+  ('Chadian'),
+  ('Chilean'),
+  ('Chinese'),
+  ('Colombian'),
+  ('Congolese'),
+  ('Czech'),
+  ('Ecuadorian'),
+  ('Egyptian'),
+  ('Filipino'),
+  ('French'),
+  ('German'),
+  ('Ghanaian'),
+  ('Hungarian'),
+  ('Indian'),
+  ('Indonesian'),
+  ('Iranian'),
+  ('Iraqi'),
+  ('Israeli'),
+  ('Italian'),
+  ('Japanese'),
+  ('Jordanian'),
+  ('Kazakhstani'),
+  ('Kenyan'),
+  ('Kuwaiti'),
+  ('Kyrgyzstani'),
+  ('Lebanese'),
+  ('Libyan'),
+  ('Malaysian'),
+  ('Maldivian'),
+  ('Malian'),
+  ('Mexican'),
+  ('Mongolian'),
+  ('Moroccan'),
+  ('Mozambican'),
+  ('Nepalese'),
+  ('Nigerian'),
+  ('Nigerien'),
+  ('North Korean'),
+  ('Omani'),
+  ('Other'),
+  ('Pakistani'),
+  ('Palestinian'),
+  ('Paraguayan'),
+  ('Peruvian'),
+  ('Polish'),
+  ('Qatari'),
+  ('Romanian'),
+  ('Russian'),
+  ('Saudi Arabian'),
+  ('Senegalese'),
+  ('Singaporean'),
+  ('Slovakian'),
+  ('Somali'),
+  ('South African'),
+  ('South Korean'),
+  ('South Sudanese'),
+  ('Spanish'),
+  ('Sri Lankan'),
+  ('Sudanese'),
+  ('Syrian'),
+  ('Tajikistani'),
+  ('Tanzanian'),
+  ('Thai'),
+  ('Turkmenistani'),
+  ('Turkish'),
+  ('UAE National'),
+  ('Ugandan'),
+  ('Ukrainian'),
+  ('Uruguayan'),
+  ('Uzbekistani'),
+  ('Venezuelan'),
+  ('Vietnamese'),
+  ('Yemeni'),
+  ('Zambian'),
+  ('Zimbabwean')
 ON CONFLICT (nationality_name) DO NOTHING;
-
--- Jobseeker preference table - to store preferences of job seekers for algorithmic matching
-CREATE TABLE jobseeker_preference(
-  person_id INTEGER NOT NULL REFERENCES person(person_id) ON DELETE CASCADE,
-  preferred_job_category_id INTEGER NOT NULL REFERENCES job_category(job_category_id) ON DELETE CASCADE
-);
 
 -- Insert category fields
 INSERT INTO category_field (category_field_name) VALUES
@@ -395,3 +510,43 @@ INSERT INTO job_type (job_type_name) VALUES
   ('Remote'),
   ('Hybrid'),
   ('Temporary');
+
+-- Insert job seeker experience levels
+INSERT INTO job_seeker_experience_level (experience_level_name) VALUES
+  ('Entry Level'),
+  ('Mid Level'),
+  ('Senior Level'),
+  ('Managerial Level'),
+  ('Executive Level');
+
+-- Insert job seeker education levels
+INSERT INTO job_seeker_education_level (education_level_name) VALUES
+  ('High School Diploma'),
+  ('Associate Degree'),
+  ('Bachelor''s Degree'),
+  ('Master''s Degree'),
+  ('Doctorate Degree'),
+  ('PhD Degree'),
+  ('Vocational Training');
+
+  -- Add verification_codes table for email verification
+CREATE TABLE IF NOT EXISTS verification_codes (
+  id SERIAL PRIMARY KEY,
+  account_id INTEGER NOT NULL REFERENCES account(account_id) ON DELETE CASCADE,
+  code VARCHAR(6) NOT NULL,
+  expires_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(account_id)
+);
+
+-- Create index for better performance
+CREATE INDEX IF NOT EXISTS idx_verification_codes_account_id ON verification_codes(account_id);
+CREATE INDEX IF NOT EXISTS idx_verification_codes_expires_at ON verification_codes(expires_at);
+
+-- Add function to clean up expired verification codes
+CREATE OR REPLACE FUNCTION cleanup_expired_verification_codes()
+RETURNS void AS $$
+BEGIN
+  DELETE FROM verification_codes WHERE expires_at < NOW();
+END;
+$$ LANGUAGE plpgsql;
