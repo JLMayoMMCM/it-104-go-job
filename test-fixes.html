@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix Verification Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-title {
+            color: #333;
+            border-bottom: 2px solid #5585b5;
+            padding-bottom: 10px;
+        }
+        .test-button {
+            background: #5585b5;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #4a7399;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            color: #1565c0;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Company Association & Profile Picture Fixes - Verification Test</h1>
+    
+    <div class="test-container">
+        <h2 class="test-title">1. Company List API Test</h2>
+        <p>Test if the companies API endpoint returns available companies for employee association.</p>
+        <button class="test-button" onclick="testCompaniesAPI()">Test Companies API</button>
+        <div id="companies-result" class="result"></div>
+    </div>
+
+    <div class="test-container">
+        <h2 class="test-title">2. Education Levels API Test</h2>
+        <p>Test if the education levels API is working correctly.</p>
+        <button class="test-button" onclick="testEducationLevelsAPI()">Test Education Levels API</button>
+        <div id="education-result" class="result"></div>
+    </div>
+
+    <div class="test-container">
+        <h2 class="test-title">3. Profile Picture API Test</h2>
+        <p>Test if the profile picture serving API works correctly.</p>
+        <button class="test-button" onclick="testProfilePictureAPI()">Test Profile Picture API</button>
+        <div id="profile-pic-result" class="result"></div>
+    </div>
+
+    <div class="test-container">
+        <h2 class="test-title">4. Health Check</h2>
+        <p>Check if the main APIs are responding correctly.</p>
+        <button class="test-button" onclick="testHealthCheck()">Run Health Check</button>
+        <div id="health-result" class="result"></div>
+    </div>
+
+    <script>
+        async function testCompaniesAPI() {
+            const resultDiv = document.getElementById('companies-result');
+            resultDiv.className = 'result info';
+            resultDiv.innerHTML = '🔄 Testing companies API...';
+
+            try {
+                const response = await fetch('/api/companies');
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <strong>✅ Companies API Working!</strong><br>
+                        Found ${data.length} companies available for association<br>
+                        <pre>${JSON.stringify(data.slice(0, 3), null, 2)}</pre>
+                        ${data.length > 3 ? `<p><em>... and ${data.length - 3} more companies</em></p>` : ''}
+                    `;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `<strong>❌ API Error:</strong> ${data.error || 'Unknown error'}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<strong>❌ Request Failed:</strong> ${error.message}`;
+            }
+        }
+
+        async function testEducationLevelsAPI() {
+            const resultDiv = document.getElementById('education-result');
+            resultDiv.className = 'result info';
+            resultDiv.innerHTML = '🔄 Testing education levels API...';
+
+            try {
+                const response = await fetch('/api/education-levels');
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <strong>✅ Education Levels API Working!</strong><br>
+                        Found ${data.length} education levels<br>
+                        <pre>${JSON.stringify(data.slice(0, 5), null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `<strong>❌ API Error:</strong> ${data.error || 'Unknown error'}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<strong>❌ Request Failed:</strong> ${error.message}`;
+            }
+        }
+
+        async function testProfilePictureAPI() {
+            const resultDiv = document.getElementById('profile-pic-result');
+            resultDiv.className = 'result info';
+            resultDiv.innerHTML = '🔄 Testing profile picture API...';
+
+            try {
+                // Test with a sample user ID (1) - this should return 404 if no picture exists
+                const response = await fetch('/api/profile-picture/1');
+                
+                if (response.status === 404) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <strong>✅ Profile Picture API Working!</strong><br>
+                        API correctly returns 404 for non-existent profile picture (expected behavior)<br>
+                        Status: ${response.status} ${response.statusText}
+                    `;
+                } else if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <strong>✅ Profile Picture API Working!</strong><br>
+                        Successfully served profile picture<br>
+                        Content-Type: ${response.headers.get('content-type')}<br>
+                        Status: ${response.status} ${response.statusText}
+                    `;
+                } else {
+                    const data = await response.json();
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `<strong>❌ API Error:</strong> ${data.error || response.statusText}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `<strong>❌ Request Failed:</strong> ${error.message}`;
+            }
+        }
+
+        async function testHealthCheck() {
+            const resultDiv = document.getElementById('health-result');
+            resultDiv.className = 'result info';
+            resultDiv.innerHTML = '🔄 Running health checks...';
+
+            const tests = [
+                { name: 'Companies API', url: '/api/companies' },
+                { name: 'Education Levels API', url: '/api/education-levels' },
+                { name: 'Profile Picture API', url: '/api/profile-picture/1' },
+                { name: 'Health API', url: '/api/health' }
+            ];
+
+            let results = [];
+            
+            for (const test of tests) {
+                try {
+                    const response = await fetch(test.url);
+                    const status = response.status;
+                    const statusText = response.statusText;
+                    
+                    if (response.ok || (test.name === 'Profile Picture API' && status === 404)) {
+                        results.push(`✅ ${test.name}: ${status} ${statusText}`);
+                    } else {
+                        results.push(`❌ ${test.name}: ${status} ${statusText}`);
+                    }
+                } catch (error) {
+                    results.push(`❌ ${test.name}: ${error.message}`);
+                }
+            }
+
+            const allPassed = results.every(r => r.startsWith('✅'));
+            resultDiv.className = allPassed ? 'result success' : 'result error';
+            resultDiv.innerHTML = `
+                <strong>${allPassed ? '✅ All Health Checks Passed!' : '⚠️ Some Health Checks Failed'}</strong><br>
+                <pre>${results.join('\n')}</pre>
+            `;
+        }
+
+        // Run health check on page load
+        window.addEventListener('load', () => {
+            testHealthCheck();
+        });
+    </script>
+</body>
+</html>

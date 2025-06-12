@@ -13,6 +13,9 @@ async function getUserFromToken(request) {
     const token = authHeader.substring(7);
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
+    // Use the correct account ID field
+    const accountId = decoded.account_id || decoded.accountId || decoded.userId;
+    
     // Get user details from database
     const { data: account, error } = await supabase
       .from('account')
@@ -20,21 +23,38 @@ async function getUserFromToken(request) {
         account_id,
         account_email,
         account_username,
-        account_type (account_type_name),
-        person (
-          person_id,
-          first_name,
-          last_name
-        )
+        account_type_id,
+        account_type (account_type_name)
       `)
-      .eq('account_id', decoded.accountId)
+      .eq('account_id', accountId)
       .single();
 
     if (error || !account) {
       return null;
     }
 
-    return account;
+    // Get person details through job_seeker table
+    const { data: jobseeker, error: jobseekerError } = await supabase
+      .from('job_seeker')
+      .select(`
+        person_id,
+        person (
+          person_id,
+          first_name,
+          last_name
+        )
+      `)
+      .eq('account_id', accountId)
+      .single();
+
+    if (jobseekerError || !jobseeker) {
+      return null;
+    }
+
+    return {
+      ...account,
+      person: jobseeker.person
+    };
   } catch (error) {
     console.error('Token verification error:', error);
     return null;
@@ -44,7 +64,7 @@ async function getUserFromToken(request) {
 export async function GET(request) {
   try {
     const user = await getUserFromToken(request);
-    if (!user || user.account_type.account_type_name !== 'Job Seeker') {
+    if (!user || user.account_type_id !== 2) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -73,8 +93,8 @@ export async function GET(request) {
     }
 
     return NextResponse.json({
-      field_preferences: fieldPreferences?.map(fp => fp.preferred_job_field_id) || [],
-      category_preferences: categoryPreferences?.map(cp => cp.preferred_job_category_id) || []
+      fieldPreferences: fieldPreferences?.map(fp => fp.preferred_job_field_id) || [],
+      categoryPreferences: categoryPreferences?.map(cp => cp.preferred_job_category_id) || []
     });
 
   } catch (error) {
@@ -86,12 +106,12 @@ export async function GET(request) {
 export async function PUT(request) {
   try {
     const user = await getUserFromToken(request);
-    if (!user || user.account_type.account_type_name !== 'Job Seeker') {
+    if (!user || user.account_type_id !== 2) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const personId = user.person.person_id;
-    const { field_preferences, category_preferences } = await request.json();
+    const { fieldPreferences, categoryPreferences } = await request.json();
 
     // Start a transaction by handling both operations
     
@@ -118,8 +138,8 @@ export async function PUT(request) {
     }
 
     // Insert new field preferences
-    if (field_preferences && field_preferences.length > 0) {
-      const fieldData = field_preferences.map(fieldId => ({
+    if (fieldPreferences && fieldPreferences.length > 0) {
+      const fieldData = fieldPreferences.map(fieldId => ({
         person_id: personId,
         preferred_job_field_id: fieldId
       }));
@@ -135,8 +155,8 @@ export async function PUT(request) {
     }
 
     // Insert new category preferences
-    if (category_preferences && category_preferences.length > 0) {
-      const categoryData = category_preferences.map(categoryId => ({
+    if (categoryPreferences && categoryPreferences.length > 0) {
+      const categoryData = categoryPreferences.map(categoryId => ({
         person_id: personId,
         preferred_job_category_id: categoryId
       }));
@@ -153,8 +173,8 @@ export async function PUT(request) {
 
     return NextResponse.json({ 
       message: 'Preferences updated successfully',
-      field_preferences: field_preferences || [],
-      category_preferences: category_preferences || []
+      fieldPreferences: fieldPreferences || [],
+      categoryPreferences: categoryPreferences || []
     });
 
   } catch (error) {

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Employee Verification Email</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Employee Verification Email Test</h1>
+        <p>This page tests the new company-branded verification email feature for employee registration.</p>
+        
+        <div class="test-section">
+            <h3>Test Employee Registration with Company-Branded Email</h3>
+            <p>This test will register an employee with a known company and send a company-branded verification email.</p>
+            <button class="test-button" onclick="testEmployeeRegistration()">Test Employee Registration</button>
+            <div id="employeeResult"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Test Regular Job Seeker Registration (for comparison)</h3>
+            <p>This test will register a job seeker with the standard verification email.</p>
+            <button class="test-button" onclick="testJobSeekerRegistration()">Test Job Seeker Registration</button>
+            <div id="jobseekerResult"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Check Available Companies</h3>
+            <p>View companies available in the database for testing.</p>
+            <button class="test-button" onclick="checkCompanies()">Check Companies</button>
+            <div id="companiesResult"></div>
+        </div>
+    </div>
+
+    <script>
+        async function testEmployeeRegistration() {
+            const resultDiv = document.getElementById('employeeResult');
+            resultDiv.innerHTML = '<div class="info">Testing employee registration...</div>';
+            
+            const timestamp = Date.now();
+            const employeeData = {
+                email: `employee.test.${timestamp}@example.com`,
+                password: 'testpassword123',
+                username: `emp_user_${timestamp}`,
+                user_type: 'employee',
+                first_name: 'John',
+                last_name: 'Employee',
+                phone: '09123456789',
+                birth_date: '1990-05-15',
+                nationality_id: 1, // Assuming Filipino is ID 1
+                gender_id: 1, // Assuming male is ID 1
+                job_title: 'Software Developer',
+                company_id: '1', // Using company_id as string to match expected format
+                city_name: 'Manila',
+                premise_name: 'Test Residence',
+                street_name: 'Test Street',
+                barangay_name: 'Test Barangay'
+            };
+
+            try {
+                console.log('Employee test data:', employeeData);
+                
+                const response = await fetch('/api/auth/register-new', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(employeeData),
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Employee registration successful!</h4>
+                            <p><strong>Message:</strong> ${result.message}</p>
+                            <p><strong>Email:</strong> ${employeeData.email}</p>
+                            <p><strong>Company ID:</strong> ${employeeData.company_id}</p>
+                            <p>🔔 Check the server console for company-branded verification email logs!</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Employee registration failed</h4>
+                            <p><strong>Error:</strong> ${result.error}</p>
+                            <pre>${JSON.stringify(result, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Test failed with error</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testJobSeekerRegistration() {
+            const resultDiv = document.getElementById('jobseekerResult');
+            resultDiv.innerHTML = '<div class="info">Testing job seeker registration...</div>';
+            
+            const timestamp = Date.now();
+            const jobseekerData = {
+                email: `jobseeker.test.${timestamp}@example.com`,
+                password: 'testpassword123',
+                username: `js_user_${timestamp}`,
+                user_type: 'job-seeker',
+                first_name: 'Jane',
+                last_name: 'JobSeeker',
+                phone: '09876543210',
+                birth_date: '1992-08-10',
+                nationality_id: 1,
+                gender_id: 2,
+                city_name: 'Quezon City',
+                premise_name: 'Test House',
+                street_name: 'Test Avenue',
+                barangay_name: 'Test District'
+            };
+
+            try {
+                console.log('Job seeker test data:', jobseekerData);
+                
+                const response = await fetch('/api/auth/register-new', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(jobseekerData),
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Job seeker registration successful!</h4>
+                            <p><strong>Message:</strong> ${result.message}</p>
+                            <p><strong>Email:</strong> ${jobseekerData.email}</p>
+                            <p>🔔 Check the server console for standard verification email logs!</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Job seeker registration failed</h4>
+                            <p><strong>Error:</strong> ${result.error}</p>
+                            <pre>${JSON.stringify(result, null, 2)}</pre>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Test failed with error</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function checkCompanies() {
+            const resultDiv = document.getElementById('companiesResult');
+            resultDiv.innerHTML = '<div class="info">Checking available companies...</div>';
+            
+            try {
+                const response = await fetch('/api/companies');
+                
+                if (response.ok) {
+                    const companies = await response.json();
+                    
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h4>✅ Available Companies:</h4>
+                            <pre>${JSON.stringify(companies, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h4>❌ Failed to fetch companies</h4>
+                            <p>Companies API might not be available. Using default company_id: 1</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h4>❌ Error checking companies</h4>
+                        <p>${error.message}</p>
+                        <p>Using default company_id: 1 for testing</p>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

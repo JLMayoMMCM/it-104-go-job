@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '../../../lib/supabase';
 import bcrypt from 'bcryptjs';
-import { sendVerificationEmail, sendCompanyWelcomeEmail } from '../../../lib/emailService';
+import { sendVerificationEmail, sendCompanyWelcomeEmail, sendEmployeeVerificationEmail, sendEmployeeVerificationToCompanyEmail } from '../../../lib/emailService';
 
 export async function POST(request) {
   try {
-    const body = await request.json();    const {
+    const body = await request.json();
+
+    const {
       username,
       email,
       password,
@@ -16,6 +18,7 @@ export async function POST(request) {
       phone,
       birth_date,
       nationality_id,
+      gender_id,
       // Address info (required for all)
       premise_name,
       street_name,
@@ -29,7 +32,8 @@ export async function POST(request) {
       preferred_salary_min,
       preferred_salary_max,
       profile_summary,
-      skills,      // Employee fields
+      skills,
+      // Employee fields
       job_title,
       company_id,
       // Company fields (for all types that need company info)
@@ -42,7 +46,9 @@ export async function POST(request) {
       company_email
     } = body;
 
-    console.log('Registration request received:', { email, user_type, first_name, last_name, company_name });    // For company registration, email and password are not required
+    console.log('Registration request received:', { email, user_type, first_name, last_name, company_name });
+
+    // For company registration, email and password are not required
     if (user_type !== 'company') {
       if (!email || !password) {
         return NextResponse.json({ error: 'Email and password are required for personal accounts' }, { status: 400 });
@@ -71,7 +77,9 @@ export async function POST(request) {
     // Validate city (required for all registrations)
     if (!city_name || !city_name.trim()) {
       return NextResponse.json({ error: 'City is required' }, { status: 400 });
-    }    // Type-specific validation
+    }
+
+    // Type-specific validation
     if (user_type === 'company') {
       if (!company_name || !company_name.trim()) {
         return NextResponse.json({ error: 'Company name is required for company registration' }, { status: 400 });
@@ -90,13 +98,22 @@ export async function POST(request) {
       if (!nationality_id) {
         return NextResponse.json({ error: 'Nationality is required' }, { status: 400 });
       }
-        // Employee-specific validation
+      if (!gender_id) {
+        return NextResponse.json({ error: 'Gender is required' }, { status: 400 });
+      }
+      if (!birth_date) {
+        return NextResponse.json({ error: 'Date of birth is required' }, { status: 400 });
+      }
+
+      // Employee-specific validation
       if (user_type === 'employee') {
         if (!company_id || !company_id.trim()) {
           return NextResponse.json({ error: 'Company ID is required for employee registration' }, { status: 400 });
         }
       }
-    }    // Check if email already exists (only for personal registrations)
+    }
+
+    // Check if email already exists (only for personal registrations)
     if (user_type !== 'company') {
       const { data: existingAccount } = await supabase
         .from('account')
@@ -107,7 +124,9 @@ export async function POST(request) {
       if (existingAccount) {
         return NextResponse.json({ error: 'An account with this email already exists' }, { status: 400 });
       }
-    }    // Hash password (only for personal registrations)
+    }
+
+    // Hash password (only for personal registrations)
     let hashedPassword = null;
     let verificationCode = null;
     if (user_type !== 'company') {
@@ -120,7 +139,9 @@ export async function POST(request) {
     let accountNumber = null;
     if (user_type !== 'company') {
       accountNumber = 'ACC' + Date.now() + Math.floor(Math.random() * 1000);
-    }    // Handle different registration types
+    }
+
+    // Handle different registration types
     if (user_type === 'company') {
       await registerCompany({
         company_name,
@@ -133,10 +154,9 @@ export async function POST(request) {
         street_name,
         barangay_name,
         city_name
-      });
-    } else {
+      });    } else {
       // Personal registration (job-seeker or employee)
-      await registerPerson({
+      const registrationResult = await registerPerson({
         username,
         email,
         hashedPassword,
@@ -148,6 +168,7 @@ export async function POST(request) {
         phone,
         birth_date,
         nationality_id,
+        gender_id,
         // Address data
         premise_name,
         street_name,
@@ -159,7 +180,8 @@ export async function POST(request) {
         preferred_job_type,
         preferred_location,
         preferred_salary_min,
-        preferred_salary_max,        profile_summary,
+        preferred_salary_max,
+        profile_summary,
         skills,
         job_title,
         company_id,
@@ -168,11 +190,38 @@ export async function POST(request) {
         company_description,
         company_website,
         company_size,
-        company_phone,        company_email
+        company_phone,
+        company_email
       });
-    }
-
-    // Send appropriate emails after successful registration
+      
+      // Extract company info for employee emails
+      const companyInfo = registrationResult?.companyInfo;      // Send verification email for personal registrations
+      try {
+        const userName = `${first_name} ${last_name}`;
+        if (user_type === 'employee' && companyInfo && companyInfo.company_email) {
+          // Send employee verification email to company email instead of personal email
+          await sendEmployeeVerificationToCompanyEmail(
+            companyInfo.company_email, 
+            email, 
+            verificationCode, 
+            userName, 
+            companyInfo
+          );
+          console.log('Employee verification email sent to company email successfully');
+        } else if (user_type === 'employee' && companyInfo && !companyInfo.company_email) {
+          // Fallback: if no company email, send to personal email with company branding
+          await sendEmployeeVerificationEmail(email, verificationCode, userName, companyInfo);
+          console.log('Employee verification email sent to personal email (no company email available)');
+        } else {
+          // Standard verification for job seekers
+          await sendVerificationEmail(email, verificationCode, userName);
+          console.log('Standard verification email sent successfully');
+        }
+      } catch (emailError) {
+        console.error('Failed to send verification email:', emailError);
+        // Don't fail the registration if email fails
+      }
+    }    // Send appropriate emails after successful registration
     if (user_type === 'company') {
       // Send welcome email for company registration
       if (company_email || company_name) {
@@ -184,19 +233,9 @@ export async function POST(request) {
           // Don't fail the registration if email fails
         }
       }
-    } else {
-      // Send verification email for personal registrations
-      try {
-        const userName = `${first_name} ${last_name}`;
-        await sendVerificationEmail(email, verificationCode, userName);
-        console.log('Verification email sent successfully');
-      } catch (emailError) {
-        console.error('Failed to send verification email:', emailError);
-        // Don't fail the registration if email fails
-      }
     }
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: user_type === 'company' 
         ? 'Company registration successful! Your company has been added to our directory.' 
         : 'Registration successful! Please check your email for verification instructions.',
@@ -279,6 +318,7 @@ async function registerPerson(data) {
     phone,
     birth_date,
     nationality_id,
+    gender_id,
     // Address data
     premise_name,
     street_name,
@@ -308,6 +348,17 @@ async function registerPerson(data) {
     throw new Error('Invalid nationality selected');
   }
 
+  // Validate gender exists
+  const { data: genderCheck, error: genderError } = await supabase
+    .from('gender')
+    .select('gender_id')
+    .eq('gender_id', gender_id)
+    .single();
+
+  if (genderError || !genderCheck) {
+    throw new Error('Invalid gender selected');
+  }
+
   // Create address
   const { data: addressData, error: addressError } = await supabase
     .from('address')
@@ -332,6 +383,8 @@ async function registerPerson(data) {
       first_name,
       last_name,
       middle_name: null,
+      date_of_birth: birth_date,
+      gender: parseInt(gender_id),
       address_id: addressData.address_id,
       nationality_id: parseInt(nationality_id)
     }])
@@ -343,6 +396,7 @@ async function registerPerson(data) {
     throw new Error('Failed to create person record: ' + personError.message);
   }
   // Create account
+  const accountTypeId = user_type === 'employee' ? 1 : 2; // 1 for employees/company, 2 for job-seekers
   const { data: accountData, error: accountError } = await supabase
     .from('account')
     .insert([{
@@ -351,15 +405,16 @@ async function registerPerson(data) {
       account_phone: phone || null,
       account_number: accountNumber,
       account_password: hashedPassword,
-      account_type_id: 2, // Both job-seekers and employees use account_type_id=2
+      account_type_id: accountTypeId,
       account_is_verified: false
     }])
     .select('account_id')
-    .single();  if (accountError) {
+    .single();
+
+  if (accountError) {
     console.error('Account creation error:', accountError);
     throw new Error('Failed to create account: ' + accountError.message);
   }
-
   // Store verification code with 24-hour expiration
   try {
     const expiresAt = new Date();
@@ -384,6 +439,10 @@ async function registerPerson(data) {
     console.error('Failed to store verification code:', verificationError);
     // Continue with registration even if verification code storage fails
   }
+
+  // Initialize company info for potential employee registration
+  let companyInfo = null;
+
   if (user_type === 'job-seeker') {
     // Create job seeker record
     const { error: jobSeekerError } = await supabase
@@ -398,35 +457,33 @@ async function registerPerson(data) {
       console.error('Job seeker creation error:', jobSeekerError);
       throw new Error('Failed to create job seeker profile: ' + jobSeekerError.message);
     }  } else if (user_type === 'employee') {
-    // For employees, use provided company_id
-    let finalCompanyId = company_id || null;
-
-    // If company_id is provided, validate it exists
+    // If company_id is provided, validate it exists and get company info for email
     if (company_id) {
       const { data: companyExists, error: companyCheckError } = await supabase
         .from('company')
-        .select('company_id')
+        .select('company_id, company_name, company_email')
         .eq('company_id', company_id)
         .single();
 
       if (companyCheckError || !companyExists) {
         throw new Error('Invalid company ID provided');
       }
-    }
-
-    // Create employee record
+      
+      companyInfo = companyExists;
+    }    // Create employee record
     const { error: employeeError } = await supabase
       .from('employee')
       .insert([{
         person_id: personData.person_id,
         account_id: accountData.account_id,
-        company_id: finalCompanyId,
+        company_id: company_id || null,
         position_name: job_title || null
-      }]);
-
-    if (employeeError) {
+      }]);if (employeeError) {
       console.error('Employee creation error:', employeeError);
       throw new Error('Failed to create employee profile: ' + employeeError.message);
     }
   }
+  
+  // Return company info for employee registrations (for email branding)
+  return { companyInfo };
 }

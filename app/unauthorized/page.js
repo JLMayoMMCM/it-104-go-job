@@ -1,8 +1,8 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function UnauthorizedPage() {
+function UnauthorizedContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [returnUrl, setReturnUrl] = useState('/');
@@ -190,8 +190,15 @@ export default function UnauthorizedPage() {
           .error-icon {
             font-size: 48px;
           }
-        }
-      `}</style>
+        }      `}</style>
     </div>
+  );
+}
+
+export default function UnauthorizedPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <UnauthorizedContent />
+    </Suspense>
   );
 }

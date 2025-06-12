@@ -54,15 +54,16 @@ export default function RegistrationTestPage() {
     // Generate unique test emails to avoid conflicts
     const timestamp = Date.now();
     
-    const testData = {
-      'job-seeker': {
+    const testData = {      'job-seeker': {
         email: `test.jobseeker.${timestamp}@example.com`,
         password: 'testpassword123',
         user_type: 'job-seeker',
         first_name: 'Test',
         last_name: 'JobSeeker',
         phone: '09123456789',
+        birth_date: '1992-05-15',
         nationality_id: nationalities[0]?.nationality_id || 1,
+        gender_id: 1, // Assuming 1 is a valid gender ID
         city_name: 'Test City',
         premise_name: 'Test House',
         street_name: 'Test Street',
@@ -70,15 +71,16 @@ export default function RegistrationTestPage() {
         education_level: 'Bachelor\'s Degree',
         experience_level: 'Entry Level',
         profile_summary: 'Test profile summary for job seeker'
-      },
-      'employee': {
+      },      'employee': {
         email: `test.employee.${timestamp}@example.com`,
         password: 'testpassword123',
         user_type: 'employee',
         first_name: 'Test',
         last_name: 'Employee',
         phone: '09123456789',
+        birth_date: '1990-01-01',
         nationality_id: nationalities[0]?.nationality_id || 1,
+        gender_id: 1, // Assuming 1 is a valid gender ID
         company_name: `Test Company ${timestamp}`,
         job_title: 'Test Position',
         city_name: 'Test City',

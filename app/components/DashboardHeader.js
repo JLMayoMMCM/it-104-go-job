@@ -180,9 +180,32 @@ export default function DashboardHeader({ user }) {
           <div className="header-right">            <div className="user-info">
               <span className="welcome-text">
                 Welcome, {currentUser?.profile?.person?.first_name || currentUser?.username || 'User'}
-              </span>
-              <div className="user-avatar">
-                {currentUser?.profile?.person?.first_name?.charAt(0) || 'U'}
+              </span>              <div className="user-avatar">
+                {currentUser?.account_id ? (
+                  <img 
+                    src={`/api/profile-picture/${currentUser.account_id}`}
+                    alt="Profile"
+                    className="avatar-image"
+                    onLoad={(e) => {
+                      e.target.style.display = 'block';
+                      e.target.nextSibling.style.display = 'none';
+                    }}
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'flex';
+                    }}
+                    style={{ display: 'block' }}
+                  />
+                ) : null}
+                <span 
+                  className="avatar-text" 
+                  style={{ 
+                    display: 'none' 
+                  }}
+                >
+                  {currentUser?.profile?.person?.first_name?.charAt(0) || currentUser?.firstName?.charAt(0) || 'U'}
+                  {currentUser?.profile?.person?.last_name?.charAt(0) || currentUser?.lastName?.charAt(0) || ''}
+                </span>
               </div>
             </div>
             

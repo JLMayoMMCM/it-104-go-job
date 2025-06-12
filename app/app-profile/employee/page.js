@@ -213,19 +213,38 @@ function EmployeeProfileContent() {
       <DashboardHeader user={currentUser} />
       
       <div className="profile-content">
-        <div className="profile-header">
-          <div className="profile-info">
-            <div className="profile-avatar">
-              <span className="avatar-text">
-                {currentUser?.firstName?.charAt(0)}{currentUser?.lastName?.charAt(0)}
+        <div className="profile-header">          <div className="profile-info">            <div className="profile-avatar">
+              {profile?.profile_picture ? (
+                <img 
+                  src={`/api/profile-picture/${currentUser?.account_id}`}
+                  alt="Profile" 
+                  className="avatar-img"
+                  onLoad={(e) => {
+                    e.target.style.display = 'block';
+                  }}
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex';
+                  }}
+                  style={{ display: 'block' }}
+                />
+              ) : null}
+              <span 
+                className="avatar-text"
+                style={{ 
+                  display: profile?.profile_picture ? 'none' : 'flex' 
+                }}
+              >
+                {profile?.first_name?.charAt(0)}{profile?.last_name?.charAt(0)}
               </span>
-            </div>
-            <div className="profile-details">
+            </div><div className="profile-details">
               <h1 className="profile-name">
-                {currentUser?.firstName} {currentUser?.lastName}
+                {profile?.first_name} {profile?.last_name}
               </h1>
-              <p className="profile-email">{currentUser?.email}</p>
-              <p className="profile-role">Employee at {company?.company_name || 'Company'}</p>
+              <p className="profile-email">{profile?.email}</p>
+              <p className="profile-role">
+                {profile?.position_name || 'Employee'} at {company?.company_name || 'Company'}
+              </p>
               {profile?.location && (
                 <p className="profile-location">📍 {profile.location}</p>
               )}
@@ -280,19 +299,18 @@ function EmployeeProfileContent() {
               ) : (
                 <div className="profile-sections">
                   <div className="profile-section">
-                    <h3>Personal Information</h3>
-                    <div className="info-grid">
+                    <h3>Personal Information</h3>                    <div className="info-grid">
                       <div className="info-item">
                         <label>First Name</label>
-                        <span>{currentUser?.firstName || 'Not specified'}</span>
+                        <span>{profile?.first_name || 'Not specified'}</span>
                       </div>
                       <div className="info-item">
                         <label>Last Name</label>
-                        <span>{currentUser?.lastName || 'Not specified'}</span>
+                        <span>{profile?.last_name || 'Not specified'}</span>
                       </div>
                       <div className="info-item">
                         <label>Email</label>
-                        <span>{currentUser?.email}</span>
+                        <span>{profile?.email || 'Not specified'}</span>
                       </div>
                       <div className="info-item">
                         <label>Phone</label>
@@ -300,7 +318,7 @@ function EmployeeProfileContent() {
                       </div>
                       <div className="info-item">
                         <label>Date of Birth</label>
-                        <span>{profile?.dateOfBirth ? formatDate(profile.dateOfBirth) : 'Not specified'}</span>
+                        <span>{profile?.date_of_birth ? formatDate(profile.date_of_birth) : 'Not specified'}</span>
                       </div>
                       <div className="info-item">
                         <label>Nationality</label>
@@ -315,10 +333,9 @@ function EmployeeProfileContent() {
                       <div className="info-item">
                         <label>Company</label>
                         <span>{company?.company_name || 'Not specified'}</span>
-                      </div>
-                      <div className="info-item">
+                      </div>                      <div className="info-item">
                         <label>Position</label>
-                        <span>{profile?.position || 'Not specified'}</span>
+                        <span>{profile?.position_name || 'Not specified'}</span>
                       </div>
                       <div className="info-item">
                         <label>Department</label>
@@ -326,7 +343,7 @@ function EmployeeProfileContent() {
                       </div>
                       <div className="info-item">
                         <label>Employee ID</label>
-                        <span>{profile?.employeeId || 'Not specified'}</span>
+                        <span>{profile?.employee_id || 'Not specified'}</span>
                       </div>
                       <div className="info-item">
                         <label>Hire Date</label>

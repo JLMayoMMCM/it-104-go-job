@@ -4,58 +4,76 @@ import { supabase } from '../../../lib/supabase';
 
 export async function GET(request) {
   try {
-    // Extract JWT token from cookies
-    const token = request.cookies.get('token')?.value;
-    
-    if (!token) {
-      return NextResponse.json({ error: 'No token provided' }, { status: 401 });
+    // Get JWT token from Authorization header
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Authorization token required' }, { status: 401 });
     }
 
-    // Verify JWT token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = decoded.userId;
+    const token = authHeader.split(' ')[1];
+    let decoded;
+    
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (error) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
 
-    // First get the employee to find the company
+    // First get the employee to find the company using correct table names
     const { data: employee, error: employeeError } = await supabase
-      .from('employees')
-      .select('id, company_id')
-      .eq('user_id', userId)
+      .from('employee')
+      .select('employee_id, company_id')
+      .eq('account_id', decoded.account_id)
       .single();
 
     if (employeeError || !employee) {
+      console.error('Employee lookup error:', employeeError);
       return NextResponse.json({ error: 'Employee not found' }, { status: 404 });
     }
 
-    // Get all employees in the same company
+    if (!employee.company_id) {
+      return NextResponse.json({ error: 'Employee is not associated with any company' }, { status: 404 });
+    }
+
+    // Get all employees in the same company using correct table structure
     const { data: employees, error } = await supabase
-      .from('employees')
+      .from('employee')
       .select(`
-        id,
-        first_name,
-        last_name,
-        email,
-        phone,
-        job_title,
-        department,
-        hire_date,
-        salary,
-        user_id,
-        users (
-          id,
-          email,
-          created_at
+        employee_id,
+        position_name,
+        person:person_id (
+          person_id,
+          first_name,
+          last_name
+        ),
+        account:account_id (
+          account_id,
+          account_email,
+          account_phone,
+          account_username
         )
       `)
       .eq('company_id', employee.company_id)
-      .order('created_at', { ascending: false });
+      .order('person_id', { ascending: true });
 
     if (error) {
       console.error('Error fetching company employees:', error);
       return NextResponse.json({ error: 'Failed to fetch employees' }, { status: 500 });
     }
 
+    // Transform the data to match expected format
+    const transformedEmployees = employees.map(emp => ({
+      id: emp.employee_id,
+      first_name: emp.person?.first_name,
+      last_name: emp.person?.last_name,
+      email: emp.account?.account_email,
+      phone: emp.account?.account_phone,
+      job_title: emp.position_name,
+      username: emp.account?.account_username
+    }));
+
     return NextResponse.json({
-      employees: employees || []
+      employees: transformedEmployees || []
     });
 
   } catch (error) {

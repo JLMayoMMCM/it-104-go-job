@@ -13,96 +13,108 @@ export async function GET(request) {
     }
 
     const token = authHeader.split(' ')[1];
-    let userId;
+    let decoded;
     
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      userId = decoded.userId;
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
     } catch (error) {
       return NextResponse.json({
         error: 'Invalid token'
       }, { status: 401 });
     }
 
-    // Get detailed employee profile
-    const { data: profileData, error: profileError } = await supabase
-      .from('account')
+    // Get detailed employee profile using the correct schema
+    const { data: employee, error: profileError } = await supabase
+      .from('employee')
       .select(`
-        account_id,
-        person (
+        employee_id,
+        position_name,
+        person!inner(
           person_id,
           first_name,
           last_name,
-          email,
+          middle_name,
           date_of_birth,
-          phone,
-          nationality (
-            nationality_name
+          gender,
+          address!inner(
+            address_id,
+            premise_name,
+            street_name,
+            barangay_name,
+            city_name
           ),
-          address (
-            address_line,
-            city,
-            province,
-            postal_code
+          nationality!inner(
+            nationality_id,
+            nationality_name
           )
         ),
-        employee (
-          employee_id,
-          employee_position,
-          employee_department,
-          employee_hire_date,
-          company (
-            company_id,
-            company_name,
-            company_description,
-            company_website,
-            company_email,
-            company_phone,
-            address (
-              address_line,
-              city,
-              province,
-              postal_code
-            )
+        company(
+          company_id,
+          company_name,
+          company_description,
+          company_website,
+          company_email,
+          company_phone,
+          address!inner(
+            address_id,
+            premise_name,
+            street_name,
+            barangay_name,
+            city_name
           )
+        ),
+        account!inner(
+          account_id,
+          account_email,
+          account_phone,
+          account_username
         )
       `)
-      .eq('account_id', userId)
+      .eq('account_id', decoded.account_id)
       .single();
 
-    if (profileError || !profileData) {
-      console.error('Error fetching profile:', profileError);
+    if (profileError || !employee) {
+      console.error('Error fetching employee profile:', profileError);
       return NextResponse.json({
-        error: 'Profile not found'
+        error: 'Employee profile not found'
       }, { status: 404 });
     }
 
-    // Transform the data
+    // Transform the data to match expected format
     const profile = {
-      firstName: profileData.person.first_name,
-      lastName: profileData.person.last_name,
-      email: profileData.person.email,
-      phone: profileData.person.phone,
-      dateOfBirth: profileData.person.date_of_birth,
-      nationality: profileData.person.nationality?.nationality_name,
-      location: profileData.person.address ? 
-        `${profileData.person.address.city}, ${profileData.person.address.province}` : 
-        null,
-      address: profileData.person.address,
-      position: profileData.employee?.employee_position,
-      department: profileData.employee?.employee_department,
-      hireDate: profileData.employee?.employee_hire_date,
-      employeeId: profileData.employee?.employee_id
+      employee_id: employee.employee_id,
+      position_name: employee.position_name,
+      first_name: employee.person.first_name,
+      last_name: employee.person.last_name,
+      middle_name: employee.person.middle_name,
+      email: employee.account.account_email,      phone: employee.account.account_phone || employee.person.phone,
+      username: employee.account.account_username,
+      date_of_birth: employee.person.date_of_birth,
+      gender: employee.person.gender,
+      nationality: employee.person.nationality?.nationality_name,
+      profile_picture: employee.account.account_profile_photo,
+      address: {
+        premise_name: employee.person.address.premise_name,
+        street_name: employee.person.address.street_name,
+        barangay_name: employee.person.address.barangay_name,
+        city_name: employee.person.address.city_name
+      },
+      location: `${employee.person.address.city_name}${employee.person.address.barangay_name ? ', ' + employee.person.address.barangay_name : ''}`
     };
 
-    const company = profileData.employee?.company ? {
-      company_id: profileData.employee.company.company_id,
-      company_name: profileData.employee.company.company_name,
-      company_description: profileData.employee.company.company_description,
-      company_website: profileData.employee.company.company_website,
-      company_email: profileData.employee.company.company_email,
-      company_phone: profileData.employee.company.company_phone,
-      address: profileData.employee.company.address
+    const company = employee.company ? {
+      company_id: employee.company.company_id,
+      company_name: employee.company.company_name,
+      company_description: employee.company.company_description,
+      company_website: employee.company.company_website,
+      company_email: employee.company.company_email,
+      company_phone: employee.company.company_phone,
+      address: employee.company.address ? {
+        premise_name: employee.company.address.premise_name,
+        street_name: employee.company.address.street_name,
+        barangay_name: employee.company.address.barangay_name,
+        city_name: employee.company.address.city_name
+      } : null
     } : null;
 
     return NextResponse.json({

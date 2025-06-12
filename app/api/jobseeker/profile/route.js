@@ -24,35 +24,35 @@ export async function GET(request) {
       return NextResponse.json({
         error: 'Invalid token'
       }, { status: 401 });
-    }
-
-    // Get detailed jobseeker profile
+    }    // Get detailed jobseeker profile using correct relationships
     const { data: profileData, error: profileError } = await supabase
-      .from('account')
+      .from('job_seeker')
       .select(`
-        account_id,
-        person (
+        job_seeker_id,
+        job_seeker_description,        account!inner (
+          account_id,
+          account_username,
+          account_email,
+          account_phone,
+          account_profile_photo
+        ),person!inner (
           person_id,
           first_name,
           last_name,
-          email,
-          date_of_birth,
-          phone,
+          middle_name,
+          nationality_id,
+          address_id,
           nationality (
+            nationality_id,
             nationality_name
           ),
           address (
-            address_line,
-            city,
-            province,
-            postal_code
+            address_id,
+            premise_name,
+            street_name,
+            barangay_name,
+            city_name
           )
-        ),
-        job_seeker (
-          job_seeker_id,
-          job_seeker_skills,
-          job_seeker_experience_level,
-          job_seeker_preferred_location
         )
       `)
       .eq('account_id', userId)
@@ -82,23 +82,31 @@ export async function GET(request) {
 
     if (prefError) {
       console.error('Error fetching preferences:', prefError);
-    }
-
-    // Transform the data
+    }    // Transform the data
     const profile = {
+      // Account data
+      username: profileData.account.account_username,
+      email: profileData.account.account_email,
+      phone: profileData.account.account_phone,
+      
+      // Personal data
       firstName: profileData.person.first_name,
       lastName: profileData.person.last_name,
-      email: profileData.person.email,
-      phone: profileData.person.phone,
-      dateOfBirth: profileData.person.date_of_birth,
+      middleName: profileData.person.middle_name,
+      nationalityId: profileData.person.nationality_id,
       nationality: profileData.person.nationality?.nationality_name,
+      
+      // Address data
+      address: profileData.person.address,      // Job seeker specific data
+      description: profileData.job_seeker_description,
+      
+      // Profile picture from account table (BYTEA data)
+      profile_picture: profileData.account.account_profile_photo || null,
+      
+      // Location string for compatibility
       location: profileData.person.address ? 
-        `${profileData.person.address.city}, ${profileData.person.address.province}` : 
-        null,
-      address: profileData.person.address,
-      skills: profileData.job_seeker?.job_seeker_skills,
-      experienceLevel: profileData.job_seeker?.job_seeker_experience_level,
-      preferredLocation: profileData.job_seeker?.job_seeker_preferred_location
+        `${profileData.person.address.city_name}${profileData.person.address.barangay_name ? ', ' + profileData.person.address.barangay_name : ''}` :
+        null
     };
 
     const transformedPreferences = preferences?.map(pref => ({

@@ -1,18 +1,34 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import './verify.css';
 
-export default function Verify() {
+function VerifyContent() {
   const [verificationCode, setVerificationCode] = useState('');
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [isEmployee, setIsEmployee] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    // Check if this is an employee verification
+    const userType = searchParams.get('type');
+    const emailParam = searchParams.get('email');
+    
+    if (userType === 'employee') {
+      setIsEmployee(true);
+    }
+    
+    if (emailParam) {
+      setEmail(emailParam);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -99,7 +115,21 @@ export default function Verify() {
             className="logo"
           />
           <h1>Verify Your Email</h1>
-          <p>We've sent a verification code to your email address</p>
+          {isEmployee ? (
+            <div className="employee-verification-notice">
+              <p className="primary-text">Employee Verification Required</p>
+              <p className="secondary-text">
+                The verification code has been sent to your company's HR email address. 
+                Please contact your HR department to obtain the verification code.
+              </p>
+              <div className="employee-info-box">
+                <strong>Important:</strong> For security reasons, employee verifications are 
+                sent to the company email to ensure authorized access.
+              </div>
+            </div>
+          ) : (
+            <p>We've sent a verification code to your email address</p>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} className="verify-form">
@@ -138,24 +168,36 @@ export default function Verify() {
           >
             {loading ? 'Verifying...' : 'Verify Email'}
           </button>
-        </form>
-
-        <div className="verify-actions">
+        </form>        <div className="verify-actions">
           <p>Didn't receive the code?</p>
-          <button 
-            type="button"
-            onClick={handleResendCode}
-            className="resend-btn"
-            disabled={resending}
-          >
-            {resending ? 'Sending...' : 'Resend Code'}
-          </button>
+          {isEmployee ? (
+            <p className="employee-resend-note">
+              Please contact your HR department or company administrator 
+              for assistance with the verification code.
+            </p>
+          ) : (
+            <button 
+              type="button"
+              onClick={handleResendCode}
+              className="resend-btn"
+              disabled={resending}
+            >
+              {resending ? 'Sending...' : 'Resend Code'}
+            </button>
+          )}
         </div>
 
-        <div className="verify-footer">
-          <p>Remember your password? <a href="/app-login">Sign in here</a></p>
+        <div className="verify-footer">        <p>Remember your password? <a href="/app-login">Sign in here</a></p>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Verify() {
+  return (
+    <Suspense fallback={<div>Loading verification page...</div>}>
+      <VerifyContent />
+    </Suspense>
   );
 }

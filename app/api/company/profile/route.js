@@ -4,46 +4,60 @@ import { supabase } from '../../../lib/supabase';
 
 export async function GET(request) {
   try {
-    // Extract JWT token from cookies
-    const token = request.cookies.get('token')?.value;
-    
-    if (!token) {
-      return NextResponse.json({ error: 'No token provided' }, { status: 401 });
+    // Get JWT token from Authorization header
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Authorization token required' }, { status: 401 });
     }
 
-    // Verify JWT token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = decoded.userId;
+    const token = authHeader.split(' ')[1];
+    let decoded;
+    
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (error) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
 
-    // First get the employee to find the company
+    // Get employee's company information using the correct table and field names
     const { data: employee, error: employeeError } = await supabase
-      .from('employees')
+      .from('employee')
       .select(`
-        id,
+        employee_id,
         company_id,
-        companies (
-          id,
-          name,
-          industry,
-          description,
-          website,
-          company_size,
-          address,
-          phone,
-          email,
-          logo_url,
-          created_at
+        position_name,
+        company:company_id (
+          company_id,
+          company_name,
+          company_description,
+          company_website,
+          company_email,
+          company_phone,
+          company_rating,
+          company_logo,
+          address:address_id (
+            address_id,
+            premise_name,
+            street_name,
+            barangay_name,
+            city_name
+          )
         )
       `)
-      .eq('user_id', userId)
+      .eq('account_id', decoded.account_id)
       .single();
 
     if (employeeError || !employee) {
+      console.error('Employee lookup error:', employeeError);
       return NextResponse.json({ error: 'Employee or company not found' }, { status: 404 });
     }
 
+    if (!employee.company_id) {
+      return NextResponse.json({ error: 'Employee is not associated with any company' }, { status: 404 });
+    }
+
     return NextResponse.json({
-      company: employee.companies
+      company: employee.company
     });
 
   } catch (error) {
@@ -54,58 +68,74 @@ export async function GET(request) {
 
 export async function PUT(request) {
   try {
-    // Extract JWT token from cookies
-    const token = request.cookies.get('token')?.value;
-    
-    if (!token) {
-      return NextResponse.json({ error: 'No token provided' }, { status: 401 });
+    // Get JWT token from Authorization header
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Authorization token required' }, { status: 401 });
     }
 
-    // Verify JWT token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = decoded.userId;
+    const token = authHeader.split(' ')[1];
+    let decoded;
+    
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (error) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
 
     const body = await request.json();
     const {
-      name,
-      industry,
-      description,
-      website,
-      company_size,
-      address,
-      phone,
-      email,
-      logo_url
+      company_name,
+      company_description,
+      company_website,
+      company_email,
+      company_phone
     } = body;
 
     // First get the employee to find the company
     const { data: employee, error: employeeError } = await supabase
-      .from('employees')
-      .select('id, company_id')
-      .eq('user_id', userId)
+      .from('employee')
+      .select('employee_id, company_id')
+      .eq('account_id', decoded.account_id)
       .single();
 
     if (employeeError || !employee) {
+      console.error('Employee lookup error:', employeeError);
       return NextResponse.json({ error: 'Employee not found' }, { status: 404 });
     }
 
-    // Update the company information
+    if (!employee.company_id) {
+      return NextResponse.json({ error: 'Employee is not associated with any company' }, { status: 404 });
+    }
+
+    // Update the company information using correct table and field names
     const { data: updatedCompany, error: updateError } = await supabase
-      .from('companies')
+      .from('company')
       .update({
-        name,
-        industry,
-        description,
-        website,
-        company_size,
-        address,
-        phone,
-        email,
-        logo_url,
-        updated_at: new Date().toISOString()
+        company_name,
+        company_description,
+        company_website,
+        company_email,
+        company_phone
       })
-      .eq('id', employee.company_id)
-      .select()
+      .eq('company_id', employee.company_id)
+      .select(`
+        company_id,
+        company_name,
+        company_description,
+        company_website,
+        company_email,
+        company_phone,
+        company_rating,
+        company_logo,
+        address:address_id (
+          address_id,
+          premise_name,
+          street_name,
+          barangay_name,
+          city_name
+        )
+      `)
       .single();
 
     if (updateError) {

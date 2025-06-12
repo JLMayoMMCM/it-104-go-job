@@ -193,10 +193,8 @@ export default function JobsAll() {
               >
                 Clear All
               </button>
-            </div>
-
-            <div className="filter-group">
-              <label>Search</label>
+            </div>            <div className="filter-group">
+              <label>Search Jobs</label>
               <input
                 type="text"
                 placeholder="Job title, company, or keywords..."
@@ -210,7 +208,7 @@ export default function JobsAll() {
               <label>Location</label>
               <input
                 type="text"
-                placeholder="City, province, or region..."
+                placeholder="City, province, or remote..."
                 value={filters.location}
                 onChange={(e) => handleFilterChange('location', e.target.value)}
                 className="filter-input"
@@ -275,7 +273,7 @@ export default function JobsAll() {
                   onChange={(e) => handleFilterChange('salaryMin', e.target.value)}
                   className="filter-input salary-input"
                 />
-                <span className="salary-separator">-</span>
+                <span className="salary-separator">to</span>
                 <input
                   type="number"
                   placeholder="Max"
@@ -285,125 +283,125 @@ export default function JobsAll() {
                 />
               </div>
             </div>
+
+            <div className="filter-group">
+              <label>Sort By</label>
+              <select
+                value={filters.sortBy}
+                onChange={(e) => handleFilterChange('sortBy', e.target.value)}
+                className="filter-select"
+              >
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+                <option value="salary_high">Highest Salary</option>
+                <option value="salary_low">Lowest Salary</option>
+                <option value="rating">Company Rating</option>
+              </select>
+            </div>
           </div>
 
-          {/* Jobs Content */}
-          <div className="jobs-content">
-            <div className="content-header">
-              <div className="sort-controls">
-                <label>Sort by:</label>
-                <select
-                  value={filters.sortBy}
-                  onChange={(e) => handleFilterChange('sortBy', e.target.value)}
-                  className="sort-select"
-                >
-                  <option value="newest">Newest First</option>
-                  <option value="oldest">Oldest First</option>
-                  <option value="salary_high">Highest Salary</option>
-                  <option value="salary_low">Lowest Salary</option>
-                  <option value="rating">Company Rating</option>
-                </select>
+          {/* Main Content */}
+          <div className="jobs-main-content">
+            {error && (
+              <div className="error-message">
+                {error}
+                <button onClick={loadJobs} className="retry-btn">
+                  Try Again
+                </button>
               </div>
-            </div>
+            )}
 
             {loading ? (
               <div className="loading-container">
                 <div className="loading-spinner"></div>
                 <p>Loading jobs...</p>
               </div>
-            ) : error ? (
-              <div className="error-container">
-                <p className="error-message">{error}</p>
-                <button onClick={loadJobs} className="retry-btn">
-                  Try Again
-                </button>
-              </div>
             ) : jobs.length === 0 ? (
               <div className="no-jobs-container">
-                <div className="no-jobs-icon">💼</div>
+                <div className="no-jobs-icon">🔍</div>
                 <h3>No jobs found</h3>
-                <p>Try adjusting your filters or search terms</p>
+                <p>Try adjusting your search criteria or clearing filters to see more results.</p>
                 <button onClick={clearFilters} className="clear-filters-btn">
-                  Clear Filters
+                  Clear All Filters
                 </button>
               </div>
             ) : (
               <>
+                <div className="jobs-results-header">
+                  <div className="results-info">
+                    <span>
+                      Showing {((currentPage - 1) * 12) + 1}-{Math.min(currentPage * 12, totalJobs)} of {totalJobs} jobs
+                    </span>
+                  </div>
+                </div>
+
                 <div className="jobs-grid">
                   {jobs.map(job => (
-                    <JobCard 
-                      key={job.job_id} 
-                      job={job} 
-                      showPreferenceMatch={currentUser?.user_type === 'job-seeker'}
-                    />
+                    <JobCard key={job.job_id} job={job} />
                   ))}
                 </div>
 
-                {/* Pagination */}
                 {totalPages > 1 && (
-                  <div className="pagination">
-                    <button
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={currentPage === 1}
-                      className="pagination-btn"
-                    >
-                      Previous
-                    </button>
+                  <div className="pagination-container">
+                    <div className="pagination">
+                      <button 
+                        className="pagination-btn prev"
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                      >
+                        ← Previous
+                      </button>
 
-                    <div className="page-numbers">
-                      {currentPage > 3 && (
-                        <>
+                      <div className="pagination-numbers">
+                        {currentPage > 3 && (
+                          <>
+                            <button 
+                              className="pagination-number"
+                              onClick={() => handlePageChange(1)}
+                            >
+                              1
+                            </button>
+                            {currentPage > 4 && <span className="pagination-ellipsis">...</span>}
+                          </>
+                        )}
+
+                        {getPageNumbers().map(pageNum => (
                           <button
-                            onClick={() => handlePageChange(1)}
-                            className="pagination-btn"
+                            key={pageNum}
+                            className={`pagination-number ${pageNum === currentPage ? 'active' : ''}`}
+                            onClick={() => handlePageChange(pageNum)}
                           >
-                            1
+                            {pageNum}
                           </button>
-                          {currentPage > 4 && <span className="pagination-ellipsis">...</span>}
-                        </>
-                      )}
+                        ))}
 
-                      {getPageNumbers().map(pageNum => (
-                        <button
-                          key={pageNum}
-                          onClick={() => handlePageChange(pageNum)}
-                          className={`pagination-btn ${currentPage === pageNum ? 'active' : ''}`}
-                        >
-                          {pageNum}
-                        </button>
-                      ))}
+                        {currentPage < totalPages - 2 && (
+                          <>
+                            {currentPage < totalPages - 3 && <span className="pagination-ellipsis">...</span>}
+                            <button 
+                              className="pagination-number"
+                              onClick={() => handlePageChange(totalPages)}
+                            >
+                              {totalPages}
+                            </button>
+                          </>
+                        )}
+                      </div>
 
-                      {currentPage < totalPages - 2 && (
-                        <>
-                          {currentPage < totalPages - 3 && <span className="pagination-ellipsis">...</span>}
-                          <button
-                            onClick={() => handlePageChange(totalPages)}
-                            className="pagination-btn"
-                          >
-                            {totalPages}
-                          </button>
-                        </>
-                      )}
+                      <button 
+                        className="pagination-btn next"
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                      >
+                        Next →
+                      </button>
                     </div>
-
-                    <button
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                      className="pagination-btn"
-                    >
-                      Next
-                    </button>
                   </div>
                 )}
-
-                <div className="pagination-info">
-                  Showing page {currentPage} of {totalPages} ({totalJobs} total jobs)
-                </div>
               </>
             )}
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>  );
 }

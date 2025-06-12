@@ -19,7 +19,6 @@ export default function Register() {
     password: '',
     confirmPassword: ''
   });
-
   // Jobseeker specific data
   const [jobseekerData, setJobseekerData] = useState({
     first_name: '',
@@ -27,6 +26,7 @@ export default function Register() {
     phone: '',
     birth_date: '',
     nationality_id: '',
+    gender_id: '',
     education_level: '',
     experience_level: '',
     preferred_job_type: '',
@@ -40,7 +40,9 @@ export default function Register() {
     first_name: '',
     last_name: '',
     phone: '',
+    birth_date: '',
     nationality_id: '',
+    gender_id: '',
     job_title: '',
     company_id: ''
   });
@@ -60,8 +62,8 @@ export default function Register() {
     barangay_name: '',
     city_name: ''
   });
-
   const [nationalities, setNationalities] = useState([]);
+  const [genders, setGenders] = useState([]);
   // Load nationalities for jobseeker registration
   const loadNationalities = async () => {
     try {
@@ -90,6 +92,37 @@ export default function Register() {
       setErrors(prev => ({
         ...prev,
         nationality_id: 'Error loading nationality options. Please check your connection.'
+      }));    }
+  };
+
+  // Load genders for registration
+  const loadGenders = async () => {
+    try {
+      console.log('Loading genders...');
+      const response = await fetch('/api/gender');
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Genders loaded:', data.length, 'records');
+        setGenders(data);
+        
+        if (data.length === 0) {
+          setErrors(prev => ({
+            ...prev,
+            gender_id: 'No genders available. Please try again later.'
+          }));
+        }
+      } else {
+        console.error('Failed to load genders:', response.status);
+        setErrors(prev => ({
+          ...prev,
+          gender_id: 'Failed to load gender options. Please try again.'
+        }));
+      }
+    } catch (error) {
+      console.error('Error loading genders:', error);
+      setErrors(prev => ({
+        ...prev,
+        gender_id: 'Error loading gender options. Please check your connection.'
       }));
     }
   };
@@ -215,9 +248,11 @@ export default function Register() {
       }
       if (!jobseekerData.phone.trim()) {
         newErrors.phone = 'Phone number is required';
-      }
-      if (!jobseekerData.nationality_id) {
+      }      if (!jobseekerData.nationality_id) {
         newErrors.nationality_id = 'Nationality is required';
+      }
+      if (!jobseekerData.gender_id) {
+        newErrors.gender_id = 'Gender is required';
       }
       // Address requirement - at least city name
       if (!addressData.city_name.trim()) {
@@ -230,12 +265,17 @@ export default function Register() {
       }
       if (!employeeData.last_name.trim()) {
         newErrors.last_name = 'Last name is required';
-      }
-      if (!employeeData.phone.trim()) {
+      }      if (!employeeData.phone.trim()) {
         newErrors.phone = 'Phone number is required';
+      }
+      if (!employeeData.birth_date) {
+        newErrors.birth_date = 'Date of birth is required';
       }
       if (!employeeData.nationality_id) {
         newErrors.nationality_id = 'Nationality is required';
+      }
+      if (!employeeData.gender_id) {
+        newErrors.gender_id = 'Gender is required';
       }
       if (!employeeData.company_id.trim()) {
         newErrors.company_id = 'Company ID is required';
@@ -263,12 +303,12 @@ export default function Register() {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };const handleNext = async () => {
-    if (step === 1) {
-      if (validateStep1()) {
+    if (step === 1) {      if (validateStep1()) {
         setStep(2);
-        // Load nationalities for personal registrations (job-seeker and employee)
+        // Load nationalities and genders for personal registrations (job-seeker and employee)
         if (userType === 'job-seeker' || userType === 'employee') {
           await loadNationalities();
+          await loadGenders();
         }
       }
     }
@@ -328,7 +368,12 @@ export default function Register() {
           router.push('/'); // Redirect to home page for company registration
         } else {
           alert('Registration successful! Please check your email to verify your account.');
-          router.push('/app-login/verify');
+          // Redirect to verification page with appropriate parameters
+          if (userType === 'employee') {
+            router.push(`/app-login/verify?type=employee&email=${encodeURIComponent(accountData.email)}`);
+          } else {
+            router.push(`/app-login/verify?email=${encodeURIComponent(accountData.email)}`);
+          }
         }
       } else {
         const errorData = await response.json();
@@ -530,23 +575,43 @@ export default function Register() {
                 />
                 {errors.birth_date && <span className="error-message">{errors.birth_date}</span>}
               </div>
-            </div>            <div className="form-group">
-              <label>Nationality *</label>
-              <select
-                name="nationality_id"
-                value={jobseekerData.nationality_id}
-                onChange={handleJobseekerDataChange}
-                className={errors.nationality_id ? 'error' : ''}
-              >
-                <option value="">Select Nationality</option>
-                {nationalities.map(nationality => (
-                  <option key={nationality.nationality_id} value={nationality.nationality_id}>
-                    {nationality.nationality_name}
-                  </option>
-                ))}
-              </select>
-              {errors.nationality_id && <span className="error-message">{errors.nationality_id}</span>}
-            </div>            <h3>Career Preferences</h3>
+            </div>            <div className="form-row">
+              <div className="form-group">
+                <label>Nationality *</label>
+                <select
+                  name="nationality_id"
+                  value={jobseekerData.nationality_id}
+                  onChange={handleJobseekerDataChange}
+                  className={errors.nationality_id ? 'error' : ''}
+                >
+                  <option value="">Select Nationality</option>
+                  {nationalities.map(nationality => (
+                    <option key={nationality.nationality_id} value={nationality.nationality_id}>
+                      {nationality.nationality_name}
+                    </option>
+                  ))}
+                </select>
+                {errors.nationality_id && <span className="error-message">{errors.nationality_id}</span>}
+              </div>              <div className="form-group">
+                <label>Gender *</label>
+                <select
+                  name="gender_id"
+                  value={jobseekerData.gender_id}
+                  onChange={handleJobseekerDataChange}
+                  className={errors.gender_id ? 'error' : ''}
+                >
+                  <option value="">Select Gender</option>
+                  {genders.map(gender => (
+                    <option key={gender.gender_id} value={gender.gender_id}>
+                      {gender.gender_name}
+                    </option>
+                  ))}
+                </select>
+                {errors.gender_id && <span className="error-message">{errors.gender_id}</span>}
+              </div>
+            </div>
+
+            <h3>Career Preferences</h3>
 
             <div className="form-row">
               <div className="form-group">
@@ -743,9 +808,7 @@ export default function Register() {
                 />
                 {errors.last_name && <span className="error-message">{errors.last_name}</span>}
               </div>
-            </div>
-
-            <div className="form-row">
+            </div>            <div className="form-row">
               <div className="form-group">
                 <label>Phone Number</label>
                 <input
@@ -757,7 +820,23 @@ export default function Register() {
                   className={errors.phone ? 'error' : ''}
                 />
                 {errors.phone && <span className="error-message">{errors.phone}</span>}
-              </div>              <div className="form-group">
+              </div>
+
+              <div className="form-group">
+                <label>Birth Date *</label>
+                <input
+                  type="date"
+                  name="birth_date"
+                  value={employeeData.birth_date}
+                  onChange={handleEmployeeDataChange}
+                  className={errors.birth_date ? 'error' : ''}
+                />
+                {errors.birth_date && <span className="error-message">{errors.birth_date}</span>}
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
                 <label>Job Title</label>
                 <input
                   type="text"
@@ -767,25 +846,43 @@ export default function Register() {
                   placeholder="Your position"
                 />
               </div>
+            </div><div className="form-row">
+              <div className="form-group">
+                <label>Nationality *</label>
+                <select
+                  name="nationality_id"
+                  value={employeeData.nationality_id}
+                  onChange={handleEmployeeDataChange}
+                  className={errors.nationality_id ? 'error' : ''}
+                >
+                  <option value="">Select Nationality</option>
+                  {nationalities.map(nationality => (
+                    <option key={nationality.nationality_id} value={nationality.nationality_id}>
+                      {nationality.nationality_name}
+                    </option>
+                  ))}
+                </select>
+                {errors.nationality_id && <span className="error-message">{errors.nationality_id}</span>}
+              </div>              <div className="form-group">
+                <label>Gender *</label>
+                <select
+                  name="gender_id"
+                  value={employeeData.gender_id}
+                  onChange={handleEmployeeDataChange}
+                  className={errors.gender_id ? 'error' : ''}
+                >
+                  <option value="">Select Gender</option>
+                  {genders.map(gender => (
+                    <option key={gender.gender_id} value={gender.gender_id}>
+                      {gender.gender_name}
+                    </option>
+                  ))}
+                </select>
+                {errors.gender_id && <span className="error-message">{errors.gender_id}</span>}
+              </div>
             </div>
 
-            <div className="form-group">
-              <label>Nationality *</label>
-              <select
-                name="nationality_id"
-                value={employeeData.nationality_id}
-                onChange={handleEmployeeDataChange}
-                className={errors.nationality_id ? 'error' : ''}
-              >
-                <option value="">Select Nationality</option>
-                {nationalities.map(nationality => (
-                  <option key={nationality.nationality_id} value={nationality.nationality_id}>
-                    {nationality.nationality_name}
-                  </option>
-                ))}
-              </select>
-              {errors.nationality_id && <span className="error-message">{errors.nationality_id}</span>}
-            </div>            <h3>Company Information</h3>
+            <h3>Company Information</h3>
 
             <div className="form-group">
               <label>Company ID *</label>

@@ -1,0 +1,453 @@
+{
+  "timestamp": "2025-06-12T01:57:45.038Z",
+  "summary": {
+    "total_tests": 9,
+    "passed_tests": 8,
+    "success_rate": 89
+  },
+  "test_results": [
+    {
+      "name": "Company Analytics API",
+      "passed": false
+    },
+    {
+      "name": "Bulk Applications API",
+      "passed": true
+    },
+    {
+      "name": "Advanced Search API",
+      "passed": true
+    },
+    {
+      "name": "Saved Searches API",
+      "passed": true
+    },
+    {
+      "name": "Job Edit API",
+      "passed": true
+    },
+    {
+      "name": "Job Performance API",
+      "passed": true
+    },
+    {
+      "name": "Mobile Navigation API",
+      "passed": true
+    },
+    {
+      "name": "Static Resources",
+      "passed": true
+    },
+    {
+      "name": "Required Support APIs",
+      "passed": true
+    }
+  ],
+  "detailed_logs": [
+    {
+      "timestamp": "2025-06-12T01:57:42.458Z",
+      "type": "test",
+      "message": "Starting Integration Tests for Employee Job Management System..."
+    },
+    {
+      "timestamp": "2025-06-12T01:57:42.460Z",
+      "type": "info",
+      "message": null
+    },
+    {
+      "timestamp": "2025-06-12T01:57:42.461Z",
+      "type": "test",
+      "message": "\nRunning test: Company Analytics API"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:42.461Z",
+      "type": "info",
+      "message": null
+    },
+    {
+      "timestamp": "2025-06-12T01:57:42.461Z",
+      "type": "test",
+      "message": "Testing Company Analytics API..."
+    },
+    {
+      "timestamp": "2025-06-12T01:57:42.461Z",
+      "type": "info",
+      "message": "Making GET request to /api/company/analytics"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:42.578Z",
+      "type": "error",
+      "message": "❌ Company Analytics API failed with status 401"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:42.578Z",
+      "type": "error",
+      "message": "Test Company Analytics API: FAILED"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:42.578Z",
+      "type": "test",
+      "message": "\nRunning test: Bulk Applications API"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:42.579Z",
+      "type": "info",
+      "message": null
+    },
+    {
+      "timestamp": "2025-06-12T01:57:42.579Z",
+      "type": "test",
+      "message": "Testing Bulk Applications API..."
+    },
+    {
+      "timestamp": "2025-06-12T01:57:42.579Z",
+      "type": "info",
+      "message": "Making PUT request to /api/employee/applications/bulk"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:42.659Z",
+      "type": "success",
+      "message": "✅ Bulk Applications API endpoint exists and handles requests"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:42.659Z",
+      "type": "success",
+      "message": "Test Bulk Applications API: PASSED"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:42.659Z",
+      "type": "test",
+      "message": "\nRunning test: Advanced Search API"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:42.659Z",
+      "type": "info",
+      "message": null
+    },
+    {
+      "timestamp": "2025-06-12T01:57:42.659Z",
+      "type": "test",
+      "message": "Testing Advanced Search API..."
+    },
+    {
+      "timestamp": "2025-06-12T01:57:42.659Z",
+      "type": "info",
+      "message": "Making GET request to /api/jobs/search?keywords=developer&location=Remote&advanced=true&page=1&limit=10"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.033Z",
+      "type": "success",
+      "message": "✅ Advanced Search API responded successfully"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.034Z",
+      "type": "success",
+      "message": "✅ Search response has all expected fields"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.034Z",
+      "type": "success",
+      "message": "Test Advanced Search API: PASSED"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.034Z",
+      "type": "test",
+      "message": "\nRunning test: Saved Searches API"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.034Z",
+      "type": "info",
+      "message": null
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.034Z",
+      "type": "test",
+      "message": "Testing Saved Searches API..."
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.034Z",
+      "type": "info",
+      "message": "Making GET request to /api/saved-searches"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.113Z",
+      "type": "info",
+      "message": "Making POST request to /api/saved-searches"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.188Z",
+      "type": "success",
+      "message": "✅ Saved Searches GET endpoint works"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.188Z",
+      "type": "success",
+      "message": "✅ Saved Searches POST endpoint works"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.188Z",
+      "type": "success",
+      "message": "Test Saved Searches API: PASSED"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.188Z",
+      "type": "test",
+      "message": "\nRunning test: Job Edit API"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.188Z",
+      "type": "info",
+      "message": null
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.188Z",
+      "type": "test",
+      "message": "Testing Job Edit API..."
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.188Z",
+      "type": "info",
+      "message": "Making GET request to /api/employee/jobs/test-job-123"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.274Z",
+      "type": "info",
+      "message": "Making PUT request to /api/employee/jobs/test-job-123"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.353Z",
+      "type": "success",
+      "message": "✅ Job Edit GET endpoint works"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.353Z",
+      "type": "success",
+      "message": "✅ Job Edit PUT endpoint works"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.353Z",
+      "type": "success",
+      "message": "Test Job Edit API: PASSED"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.354Z",
+      "type": "test",
+      "message": "\nRunning test: Job Performance API"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.354Z",
+      "type": "info",
+      "message": null
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.354Z",
+      "type": "test",
+      "message": "Testing Job Performance API..."
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.354Z",
+      "type": "info",
+      "message": "Making GET request to /api/employee/job-performance?days=30"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.431Z",
+      "type": "success",
+      "message": "✅ Job Performance API endpoint works"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.431Z",
+      "type": "success",
+      "message": "Test Job Performance API: PASSED"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.431Z",
+      "type": "test",
+      "message": "\nRunning test: Mobile Navigation API"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.431Z",
+      "type": "info",
+      "message": null
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.431Z",
+      "type": "test",
+      "message": "Testing Mobile Navigation API..."
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.431Z",
+      "type": "info",
+      "message": "Making GET request to /api/mobile/navigation"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.510Z",
+      "type": "success",
+      "message": "✅ Mobile Navigation API endpoint works"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.510Z",
+      "type": "success",
+      "message": "Test Mobile Navigation API: PASSED"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.510Z",
+      "type": "test",
+      "message": "\nRunning test: Static Resources"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.510Z",
+      "type": "info",
+      "message": null
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.510Z",
+      "type": "test",
+      "message": "Testing Static Resources and CSS..."
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.510Z",
+      "type": "success",
+      "message": "✅ CSS file exists: /app-dashboard/employee/bulk-applications/bulk-applications.css"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.510Z",
+      "type": "success",
+      "message": "✅ CSS file exists: /app-jobs/advanced-search/advanced-search.css"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.510Z",
+      "type": "success",
+      "message": "✅ CSS file exists: /app-profile/company/company-profile.css"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.510Z",
+      "type": "success",
+      "message": "Test Static Resources: PASSED"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.510Z",
+      "type": "test",
+      "message": "\nRunning test: Required Support APIs"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.510Z",
+      "type": "info",
+      "message": null
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.511Z",
+      "type": "test",
+      "message": "Testing Required Support APIs..."
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.511Z",
+      "type": "info",
+      "message": "Making GET request to /api/job-types"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.756Z",
+      "type": "success",
+      "message": "✅ Required API works: /api/job-types"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.756Z",
+      "type": "info",
+      "message": "Making GET request to /api/job-categories"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.962Z",
+      "type": "success",
+      "message": "✅ Required API works: /api/job-categories"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:44.962Z",
+      "type": "info",
+      "message": "Making GET request to /api/company/profile"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:45.036Z",
+      "type": "success",
+      "message": "✅ Required API works: /api/company/profile"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:45.036Z",
+      "type": "success",
+      "message": "Test Required Support APIs: PASSED"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:45.037Z",
+      "type": "test",
+      "message": "\nNaN"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:45.037Z",
+      "type": "test",
+      "message": "TEST SUMMARY"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:45.037Z",
+      "type": "test",
+      "message": null
+    },
+    {
+      "timestamp": "2025-06-12T01:57:45.037Z",
+      "type": "error",
+      "message": "❌ Company Analytics API"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:45.037Z",
+      "type": "success",
+      "message": "✅ Bulk Applications API"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:45.037Z",
+      "type": "success",
+      "message": "✅ Advanced Search API"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:45.037Z",
+      "type": "success",
+      "message": "✅ Saved Searches API"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:45.037Z",
+      "type": "success",
+      "message": "✅ Job Edit API"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:45.037Z",
+      "type": "success",
+      "message": "✅ Job Performance API"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:45.037Z",
+      "type": "success",
+      "message": "✅ Mobile Navigation API"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:45.037Z",
+      "type": "success",
+      "message": "✅ Static Resources"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:45.037Z",
+      "type": "success",
+      "message": "✅ Required Support APIs"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:45.037Z",
+      "type": "error",
+      "message": "\nTotal: 8/9 tests passed"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:45.037Z",
+      "type": "error",
+      "message": "Success Rate: 89%"
+    },
+    {
+      "timestamp": "2025-06-12T01:57:45.038Z",
+      "type": "error",
+      "message": "\n⚠️  Some tests failed. Please check the implementation before deployment."
+    }
+  ]
+}

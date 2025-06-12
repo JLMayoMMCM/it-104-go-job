@@ -32,6 +32,7 @@ DROP TABLE IF EXISTS verification_codes CASCADE;
 
 DROP TABLE IF EXISTS jobseeker_field_preference CASCADE;
 
+DROP TABLE IF EXISTS gender CASCADE;
 
 
 
@@ -53,12 +54,25 @@ CREATE TABLE address (
   city_name     VARCHAR(50)
 );
 
+CREATE TABLE gender (
+  gender_id   SERIAL      PRIMARY KEY,
+  gender_name VARCHAR(25) NOT NULL UNIQUE
+);
+
+INSERT INTO gender(gender_name) VALUES
+  ('male'),
+  ('female'),
+  ('other'),
+  ('prefer not to say');
+
 -- Person table - to store personal information of employees and job seekers
 CREATE TABLE person (
   person_id       SERIAL      PRIMARY KEY,
   first_name      VARCHAR(50) NOT NULL,
   last_name       VARCHAR(50) NOT NULL,
   middle_name     VARCHAR(50),
+  date_of_birth DATE NOT NULL,
+  gender INTEGER NOT NULL REFERENCES gender(gender_id) ON DELETE CASCADE,
   address_id      INTEGER     NOT NULL REFERENCES address(address_id) ON DELETE CASCADE,
   nationality_id  INTEGER     NOT NULL REFERENCES nationality(nationality_id) ON DELETE CASCADE
 );
@@ -80,7 +94,7 @@ CREATE TABLE account (
   account_id       SERIAL      PRIMARY KEY,
   account_email    VARCHAR(100) NOT NULL UNIQUE,
   account_username VARCHAR(50) NOT NULL UNIQUE,
-  account_photo BYTEA,
+  account_profile_photo BYTEA,
   account_resume BYTEA,
   account_phone VARCHAR(20),
   account_number   VARCHAR(20) NOT NULL UNIQUE,

@@ -223,9 +223,29 @@ function JobseekerProfileContent() {
       
       <div className="profile-content">
         <div className="profile-header">
-          <div className="profile-info">
-            <div className="profile-avatar">
-              <span className="avatar-text">
+          <div className="profile-info">            <div className="profile-avatar">
+              {currentUser?.account_id ? (
+                <img 
+                  src={`/api/profile-picture/${currentUser.account_id}`}
+                  alt="Profile"
+                  className="avatar-image"
+                  onLoad={(e) => {
+                    e.target.style.display = 'block';
+                    e.target.nextSibling.style.display = 'none';
+                  }}
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex';
+                  }}
+                  style={{ display: 'block' }}
+                />
+              ) : null}
+              <span 
+                className="avatar-text" 
+                style={{ 
+                  display: 'none' 
+                }}
+              >
                 {currentUser?.firstName?.charAt(0)}{currentUser?.lastName?.charAt(0)}
               </span>
             </div>

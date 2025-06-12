@@ -186,6 +186,39 @@
   text-decoration: underline;
 }
 
+/* Employee verification specific styles */
+.employee-verification-notice .primary-text {
+  color: #2c3e50;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.employee-verification-notice .secondary-text {
+  color: #666;
+  font-size: 1rem;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+}
+
+.employee-info-box {
+  background-color: #e3f2fd;
+  border: 1px solid #bbdefb;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+  color: #1565c0;
+  font-size: 0.9rem;
+  text-align: left;
+}
+
+.employee-resend-note {
+  color: #666;
+  font-size: 0.9rem;
+  font-style: italic;
+  margin-top: 0.5rem;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .verify-container {

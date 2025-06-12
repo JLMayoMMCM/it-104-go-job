@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '../../../../../lib/supabase';
+import { supabase } from '../../../../lib/supabase';
 import jwt from 'jsonwebtoken';
 import fs from 'fs/promises';
 import path from 'path';
